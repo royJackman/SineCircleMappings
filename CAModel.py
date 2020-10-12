@@ -38,5 +38,3 @@ class CAModel(tf.keras.Model):
         npx[:, :, -1, :] = curr_theta + npx[:, :, -3, :] + npx[:, :, -2, :] * ((-1/2)*np.sin(curr_theta * (2*np.pi)))
         x = tf.convert_to_tensor(npx)
         return x
-
-CAModel().dmodel.summary()
