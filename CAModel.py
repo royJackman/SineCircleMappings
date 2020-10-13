@@ -32,9 +32,9 @@ class CAModel(tf.keras.Model):
     def call(self, x, step_size=1.0):
         y = self.percieve(x)
         dx = self.dmodel(y) * step_size
-        curr_theta =  x.numpy()[:, :, -1, :]
+        curr_theta =  x.numpy()[:, :, :, -1]
         x += dx
         npx = x.numpy()
-        npx[:, :, -1, :] = curr_theta + npx[:, :, -3, :] + npx[:, :, -2, :] * ((-1/2)*np.sin(curr_theta * (2*np.pi)))
+        npx[:, :, :, -1] = curr_theta + npx[:, :, :, -3] + npx[:, :, :, -2] * ((-1/2)*np.sin(curr_theta * (2*np.pi)))
         x = tf.convert_to_tensor(npx)
         return x
