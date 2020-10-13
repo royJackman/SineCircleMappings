@@ -9,7 +9,7 @@ def listify(chorale):
         while len(retval) < note[0]:
             retval.append(0)
         for i in range(note[2]):
-            retval.append(note[1])
+            retval.append((note[1] - 59)/16.0)
     return retval
 
 list_chorales = np.array([listify(chorale) for chorale in bach_chorales])
