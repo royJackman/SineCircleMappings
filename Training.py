@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import matplotlib.pyplot as plt
 from CAModel import CAModel
 from DataLoader import list_chorales, stagger
 import matplotlib.pyplot as plt
