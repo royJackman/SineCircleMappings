@@ -51,7 +51,7 @@ for i in range(8000+1):
 
     print('\r step: %d, log10(loss): %.3f'%(i+1, np.log10(loss)), end='')
     
-    if step_i % 35 == 0:
+    if step_i % 50 == 0:
         ax2.clear()
         ax2.plot(notes, np.mean(x.numpy(), axis=0)[:, :, -1].flatten().tolist()[15:])
         fig.canvas.draw()
