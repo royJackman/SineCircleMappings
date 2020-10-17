@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from CAModel import CAModel
-from DataLoader import list_chorales, stagger
+from DataLoader import list_chorales, float_to_note
 import matplotlib.pyplot as plt
 
 target = tf.pad(np.array(list_chorales[0]).astype('float32').reshape((1, -1)), [(0, 0), (15, 0)])
@@ -38,8 +38,10 @@ def train_step(x):
 notes = range(len(list_chorales[0]))
 plt.ion()
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-ax1.plot(notes, list_chorales[0])
+ax1.plot(notes, [float_to_note(i) for i in list_chorales[0]])
 pred, = ax2.plot(notes, [0] * len(list_chorales[0]))
+ax1.set_ylim(59, 76)
+ax2.set_ylim(59, 76)
 plt.show()
 
 for i in range(8000+1):
@@ -51,8 +53,11 @@ for i in range(8000+1):
 
     print('\r step: %d, log10(loss): %.3f'%(i+1, np.log10(loss)), end='')
     
-    if step_i % 50 == 0:
+    if step_i % 100 == 0:
         ax2.clear()
-        ax2.plot(notes, np.mean(x.numpy(), axis=0)[:, :, -1].flatten().tolist()[15:])
+        ax2.plot(notes, [float_to_note(i) for i in np.mean(x.numpy(), axis=0)[:, :, -1].flatten().tolist()[15:]])
+        ax2.set_ylim(59, 76)
         fig.canvas.draw()
         fig.canvas.flush_events()
+
+suspend = input('\nPress ENTER to exit')

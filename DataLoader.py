@@ -26,3 +26,5 @@ def stagger(list_chorale, window=16):
     X.append(buffer)
     Y.append(0)
     return np.array(X), np.array(Y)
+
+def float_to_note(num): return round(num * 16) + 59 if num > 0 else 0
