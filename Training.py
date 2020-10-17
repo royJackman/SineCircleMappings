@@ -3,17 +3,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 from CAModel import CAModel
 from DataLoader import list_chorales, float_to_note
-import matplotlib.pyplot as plt
+from optparse import OptionParser
 
-target = tf.pad(np.array(list_chorales[0]).astype('float32').reshape((1, -1)), [(0, 0), (15, 0)])
-seed = np.zeros([1,target.shape[1],17], np.float32)
-first = np.nonzero(list_chorales[0])[0]
-seed[0, first[0], -1 ] = list_chorales[0][first[0]]
+parser = OptionParser()
+parser.add_option('-c', '--chorale', type=int, dest='chorale', default=0, help='Which chorale to use as a model')
+parser.add_option('-p', '--past-notes', type=int, dest='past_notes', default=16, help='How far into the past to stretch the convolutional window')
+(options, args) = parser.parse_args()
 
-def loss_f(x):
-    return tf.reduce_mean(tf.square(x[..., -1] - target))
+chorale = list_chorales[options.chorale]
 
-ca = CAModel()
+target = tf.pad(np.array(chorale).astype('float32').reshape((1, -1)), [(0, 0), (options.past_notes - 1, 0)])
+seed = np.zeros([1,target.shape[1],options.past_notes + 1], np.float32)
+first = np.nonzero(chorale)[0]
+seed[0, first[0], -1] = chorale[first[0]]
+
+def loss_f(x): return tf.reduce_mean(tf.square(x[..., -1] - target))
+
+ca = CAModel(past_notes=options.past_notes)
 
 loss_log = []
 
@@ -35,13 +41,13 @@ def train_step(x):
     trainer.apply_gradients(zip(grads, ca.weights))
     return x, loss
 
-notes = range(len(list_chorales[0]))
+notes = range(len(chorale))
 plt.ion()
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-ax1.plot(notes, [float_to_note(i) for i in list_chorales[0]])
-pred, = ax2.plot(notes, [0] * len(list_chorales[0]))
-ax1.set_ylim(59, 76)
-ax2.set_ylim(59, 76)
+ax1.plot(notes, [float_to_note(i) for i in chorale])
+pred, = ax2.plot(notes, [0] * len(chorale))
+ax1.set_ylim(55, 80)
+ax2.set_ylim(55, 80)
 plt.show()
 
 for i in range(8000+1):
@@ -55,7 +61,7 @@ for i in range(8000+1):
     
     if step_i % 100 == 0:
         ax2.clear()
-        ax2.plot(notes, [float_to_note(i) for i in np.mean(x.numpy(), axis=0)[:, :, -1].flatten().tolist()[15:]])
+        ax2.plot(notes, [float_to_note(i) for i in np.mean(x.numpy(), axis=0)[:, :, -1].flatten().tolist()[options.past_notes - 1:]])
         ax2.set_ylim(59, 76)
         fig.canvas.draw()
         fig.canvas.flush_events()
