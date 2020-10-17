@@ -55,14 +55,14 @@ def train_step(x):
     return x, loss
 
 plt.ion()
-fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-ax1.plot(notes, [float_to_note(i) for i in chorale])
-pred, = ax2.plot(notes, [0] * len(chorale))
-ax1.set_ylim(55, 80)
-ax2.set_ylim(55, 80)
-plt.show()
+orig, pred, = plt.plot(notes, [float_to_note(i) for i in chorale], notes, [0] * len(chorale))
+orig.axes.set_ylim(55, 80)
+pred.axes.set_ylim(55, 80)
+plt.legend()
+plt.grid()
+plt.show(block=False)
 
-for i in range(8000+1):
+for i in range(1,8001):
     x0 = np.repeat(seed[None, ...], 8, 0)
     x, loss = train_step(x0)
 
@@ -71,11 +71,9 @@ for i in range(8000+1):
 
     print('\r step: %d, log10(loss): %.3f'%(i+1, np.log10(loss)), end='')
     
-    if step_i % 100 == 0:
-        ax2.clear()
-        ax2.plot(notes, [float_to_note(i) for i in np.mean(x.numpy(), axis=0)[:, :, -1].flatten().tolist()[options.past_notes - 1:]])
-        ax2.set_ylim(55, 80)
-        fig.canvas.draw()
-        fig.canvas.flush_events()
+    if step_i % 20 == 0:
+        pred.set_ydata([float_to_note(i) for i in np.mean(x.numpy(), axis=0)[:, :, -1].flatten().tolist()[options.past_notes - 1:]])
+        plt.gcf().canvas.draw()
+        plt.gcf().canvas.flush_events()
 
 suspend = input('\nPress ENTER to exit')
