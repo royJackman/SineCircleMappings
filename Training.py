@@ -1,16 +1,29 @@
-import tensorflow as tf
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import sys
+import tensorflow as tf
+
 from CAModel import CAModel
 from DataLoader import list_chorales, float_to_note
 from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option('-c', '--chorale', type=int, dest='chorale', default=0, help='Which chorale to use as a model')
+parser.add_option('-g', '--graphing', action='store_true', dest='graphing', default=False, help='Print chorale and exit')
 parser.add_option('-p', '--past-notes', type=int, dest='past_notes', default=16, help='How far into the past to stretch the convolutional window')
 (options, args) = parser.parse_args()
 
 chorale = list_chorales[options.chorale]
+notes = range(len(chorale))
+
+if options.graphing:
+    plt.plot(notes, [float_to_note(i) for i in chorale])
+    plt.title(f'Chorale {options.chorale}')
+    plt.xlabel('Time step (in quarter-notes ♩)')
+    plt.ylabel('Note (in MIDI key values)')
+    plt.ylim(55, 80)
+    plt.show()
+    sys.exit(f'Graphing of chorale {options.chorale} complete! Exiting..')
 
 target = tf.pad(np.array(chorale).astype('float32').reshape((1, -1)), [(0, 0), (options.past_notes - 1, 0)])
 seed = np.zeros([1,target.shape[1],options.past_notes + 1], np.float32)
@@ -41,7 +54,6 @@ def train_step(x):
     trainer.apply_gradients(zip(grads, ca.weights))
     return x, loss
 
-notes = range(len(chorale))
 plt.ion()
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 ax1.plot(notes, [float_to_note(i) for i in chorale])
@@ -62,7 +74,7 @@ for i in range(8000+1):
     if step_i % 100 == 0:
         ax2.clear()
         ax2.plot(notes, [float_to_note(i) for i in np.mean(x.numpy(), axis=0)[:, :, -1].flatten().tolist()[options.past_notes - 1:]])
-        ax2.set_ylim(59, 76)
+        ax2.set_ylim(55, 80)
         fig.canvas.draw()
         fig.canvas.flush_events()
 
