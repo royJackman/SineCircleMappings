@@ -9,6 +9,8 @@ from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option('-c', '--chorale', type=int, dest='chorale', default=0, help='Which chorale to use as a model')
+parser.add_option('-e', '--epochs', type=int, dest='epochs', default=8000, help='Number of learning epochs')
+parser.add_option('-f', '--framerate', type=int, dest='framerate', default=20, help='Number of epochs between graph updates')
 parser.add_option('-g', '--graphing', action='store_true', dest='graphing', default=False, help='Print chorale and exit')
 parser.add_option('-p', '--past-notes', type=int, dest='past_notes', default=16, help='How far into the past to stretch the convolutional window')
 (options, args) = parser.parse_args()
@@ -58,11 +60,14 @@ plt.ion()
 orig, pred, = plt.plot(notes, [float_to_note(i) for i in chorale], notes, [0] * len(chorale))
 orig.axes.set_ylim(55, 80)
 pred.axes.set_ylim(55, 80)
+plt.title('Epoch 0')
+plt.xlabel('Time step (in quarter-notes ♩)')
+plt.ylabel('Note (in MIDI key values)')
 plt.legend()
 plt.grid()
 plt.show(block=False)
 
-for i in range(1,8001):
+for i in range(1, options.epochs + 1):
     x0 = np.repeat(seed[None, ...], 8, 0)
     x, loss = train_step(x0)
 
@@ -71,8 +76,9 @@ for i in range(1,8001):
 
     print('\r step: %d, log10(loss): %.3f'%(i+1, np.log10(loss)), end='')
     
-    if step_i % 20 == 0:
+    if step_i % options.framerate == 0:
         pred.set_ydata([float_to_note(i) for i in np.mean(x.numpy(), axis=0)[:, :, -1].flatten().tolist()[options.past_notes - 1:]])
+        plt.title(f'Epoch {i - 1}')
         plt.gcf().canvas.draw()
         plt.gcf().canvas.flush_events()
 
