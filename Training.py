@@ -17,10 +17,11 @@ parser.add_option('-p', '--past-notes', type=int, dest='past_notes', default=16,
 (options, args) = parser.parse_args()
 
 chorale = list_chorales[options.chorale]
+note_chorale = [float_to_note(i) for i in chorale]
 notes = range(len(chorale))
 
 if options.graphing:
-    plt.plot(notes, [float_to_note(i) for i in chorale])
+    plt.plot(notes, note_chorale)
     plt.title(f'Chorale {options.chorale}')
     plt.xlabel('Time step (in quarter-notes ♩)')
     plt.ylabel('Note (in MIDI key values)')
@@ -57,16 +58,31 @@ def train_step(x):
     trainer.apply_gradients(zip(grads, ca.weights))
     return x, loss
 
+lines = []
 plt.ion()
-orig, pred, = plt.plot(notes, [float_to_note(i) for i in chorale], notes, [0] * len(chorale))
-orig.axes.set_ylim(55, 80)
-pred.axes.set_ylim(55, 80)
-plt.title('Epoch 0')
-plt.xlabel('Time step (in quarter-notes ♩)')
-plt.ylabel('Note (in MIDI key values)')
-plt.legend()
-plt.grid()
-plt.show(block=False)
+plt.rcParams['axes.grid'] = True
+root = np.sqrt(options.batch_size + 1)
+rows = np.floor(root)
+cols = np.ceil(root)
+if rows * cols < options.batch_size + 1:
+    rows += 1
+fig, axs = plt.subplots(int(rows), int(cols), sharex=True, sharey=True)
+plt.setp(axs, ylim=(55, 80))
+for i, a in enumerate(np.asarray(axs).flatten()):
+    if i == 0:
+        a.set_title('Average')
+    elif i < options.batch_size + 1:
+        a.set_title(f'Batch {i}')
+    else:
+        fig.delaxes(a)
+    if i < options.batch_size + 1:
+        a.plot(notes, note_chorale)
+        lines.append(a.plot(notes, [0] * len(chorale))[0])
+fig.suptitle('Epoch 0')
+fig.text(0.5, 0.04, 'Time step (in quarter-notes ♩)', ha='center')
+fig.text(0.04, 0.5, 'Note (in MIDI key values)', va='center', rotation='vertical')
+mgr = plt.get_current_fig_manager().window.state('zoomed')
+plt.show()
 
 for i in range(1, options.epochs + 1):
     x0 = np.repeat(seed[None, ...], options.batch_size, 0)
@@ -78,8 +94,11 @@ for i in range(1, options.epochs + 1):
     print('\r step: %d, log10(loss): %.3f'%(i+1, np.log10(loss)), end='')
     
     if step_i % options.framerate == 0:
-        pred.set_ydata([float_to_note(i) for i in np.mean(x.numpy(), axis=0)[:, :, -1].flatten().tolist()[options.past_notes - 1:]])
-        plt.title(f'Epoch {i - 1}')
+        xn = x.numpy()
+        lines[0].set_ydata([float_to_note(j) for j in np.mean(xn, axis=0)[:, :, -1].flatten().tolist()[options.past_notes - 1:]])
+        for key, val in enumerate(lines[1:]):
+            val.set_ydata([float_to_note(j) for j in xn[key, :, :, -1].flatten().tolist()[options.past_notes - 1:]])
+        fig.suptitle(f'Epoch {i - 1}')
         plt.gcf().canvas.draw()
         plt.gcf().canvas.flush_events()
 
