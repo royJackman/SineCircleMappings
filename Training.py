@@ -8,6 +8,7 @@ from DataLoader import list_chorales, float_to_note
 from optparse import OptionParser
 
 parser = OptionParser()
+parser.add_option('-b', '--batch_size', type=int, dest='batch_size', default=8, help='Set batch size')
 parser.add_option('-c', '--chorale', type=int, dest='chorale', default=0, help='Which chorale to use as a model')
 parser.add_option('-e', '--epochs', type=int, dest='epochs', default=8000, help='Number of learning epochs')
 parser.add_option('-f', '--framerate', type=int, dest='framerate', default=20, help='Number of epochs between graph updates')
@@ -68,7 +69,7 @@ plt.grid()
 plt.show(block=False)
 
 for i in range(1, options.epochs + 1):
-    x0 = np.repeat(seed[None, ...], 8, 0)
+    x0 = np.repeat(seed[None, ...], options.batch_size, 0)
     x, loss = train_step(x0)
 
     step_i = len(loss_log)
