@@ -7,7 +7,6 @@ parser.add_argument('-f', '--file', dest='midi_filename', type=str, help='File t
 parser.add_argument('-t', '--track', action='append', dest='tracks', default=[-1], type=int, help='Tracks to make midi files for, 0-99, -1 will do all')
 args = parser.parse_args()
 
-
 if -1 in args.tracks:
     tracks = bach_chorales
 else:
