@@ -129,4 +129,5 @@ dmypy.json
 *.npy
 *.doc
 *.lisp*
+*.mid
 *.midi
