@@ -1,8 +1,8 @@
 import argparse
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from mido import MidiFile\
+from mido import MidiFile
 
 parser = argparse.ArgumentParser('Convert MIDI files to numpy')
 parser.add_argument('-i', '--input-file', dest='input_filename', type=str, help='File to read from', required=True)
@@ -14,8 +14,8 @@ tempos = []
 mid = MidiFile(args.input_filename)
 for i, track in enumerate(mid.tracks):
     t = []
-    print(f'Track {i}: {track.name}')
     time = 0
+    print(f'Track {i}: {track.name}')
     for msg in track:
         if msg.is_meta and msg.type == 'set_tempo':
             tempos.append((msg.tempo, msg.time))
