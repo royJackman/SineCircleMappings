@@ -6,6 +6,7 @@ import tensorflow as tf
 
 from CAModel import CAModel
 from DataLoader import list_chorales, float_to_note
+from MIDIConverter import midi_to_chroma
 
 parser = argparse.ArgumentParser('Train a model on a midi file')
 parser.add_argument('-b', '--batch-size', type=int, dest='batch_size', default=8, help='Set batch size')
@@ -13,30 +14,46 @@ parser.add_argument('-c', '--chorale', type=int, dest='chorale', default=0, help
 parser.add_argument('-e', '--epochs', type=int, dest='epochs', default=8000, help='Number of learning epochs')
 parser.add_argument('-f', '--framerate', type=int, dest='framerate', default=20, help='Number of epochs between graph updates')
 parser.add_argument('-g', '--graphing', action='store_true', dest='graphing', default=False, help='Print chorale and exit')
+parser.add_argument('-m', '--midi-file', type=str, dest='midi_file', default=None, help='MIDI file to process, will override chorale')
 parser.add_argument('-p', '--past-notes', type=int, dest='past_notes', default=16, help='How far into the past to stretch the convolutional window')
+parser.add_argument('-w', '--width', type=int, dest='width', default=1, help='The width of the convolutional window, how many other notes the model can see')
 args = parser.parse_args()
 
-chorale = list_chorales[args.chorale]
-note_chorale = [float_to_note(i) for i in chorale]
-notes = range(len(chorale))
+if args.midi_file is None:
+    chorale = list_chorales[args.chorale]
+    note_chorale = [float_to_note(i) for i in chorale]
+    notes = range(len(chorale))
+    chorale = np.array(chorale).reshape((1, -1))
+else:
+    chorale = midi_to_chroma(args.midi_file)
+    note_chorale = (chorale - np.min(chorale))/(np.max(chorale) - np.min(chorale))
+    notes = range(note_chorale.shape[1])
 
 if args.graphing:
-    plt.plot(notes, note_chorale)
-    plt.title(f'Chorale {args.chorale}')
-    plt.xlabel('Time step (in quarter-notes ♩)')
-    plt.ylabel('Note (in MIDI key values)')
-    plt.ylim(55, 80)
+    if note_chorale is list:
+        plt.plot(notes, note_chorale)
+        plt.title(f'Chorale {args.chorale}')
+        plt.ylim(55, 80)
+        plt.xlabel('Time step')
+        plt.ylabel('Note')
+    else:
+        fig, axs = plt.subplots(3, 4, sharex=True, sharey=True)
+        for i, a in enumerate(np.asarray(axs).flatten()):
+            a.plot(notes, note_chorale[i].tolist())
+        fig.suptitle(args.midi_file)
+        fig.text(0.5, 0.04, 'Time step', ha='center')
+        fig.text(0.04, 0.5, 'Note', va='center', rotation='vertical')
     plt.show()
-    sys.exit(f'Graphing of chorale {args.chorale} complete! Exiting..')
+    sys.exit('Graphing complete! Exiting..')
 
-target = tf.pad(np.array(chorale).astype('float32').reshape((1, -1)), [(0, 0), (args.past_notes - 1, 0)])
-seed = np.zeros([1,target.shape[1],args.past_notes + 1], np.float32)
-first = np.nonzero(chorale)[0]
-seed[0, first[0], -1] = chorale[first[0]]
+target = tf.pad(np.array(note_chorale).astype('float32'), [(0, 0), (args.past_notes - 1, 0)])
+seed = np.zeros([target.shape[0],target.shape[1],args.past_notes + 1], np.float32)
+seed[:, args.past_notes-1, -1] = note_chorale[:, 0]
 
 def loss_f(x): return tf.reduce_mean(tf.square(x[..., -1] - target))
+def scale(x): return x if args.midi_file is not None else float_to_note(x)
 
-ca = CAModel(past_notes=args.past_notes)
+ca = CAModel(past_notes=args.past_notes, width=args.width)
 
 loss_log = []
 
@@ -61,26 +78,29 @@ def train_step(x):
 lines = []
 plt.ion()
 plt.rcParams['axes.grid'] = True
-root = np.sqrt(args.batch_size + 1)
+music_graphs = 1 if args.midi_file is None else 12
+batch_graphs = args.batch_size if args.midi_file is None else 0
+total_graphs = music_graphs + batch_graphs
+root = np.sqrt(total_graphs)
 rows = np.floor(root)
 cols = np.ceil(root)
-if rows * cols < args.batch_size + 1:
+if rows * cols < total_graphs:
     rows += 1
 fig, axs = plt.subplots(int(rows), int(cols), sharex=True, sharey=True)
-plt.setp(axs, ylim=(55, 80))
 for i, a in enumerate(np.asarray(axs).flatten()):
-    if i == 0:
-        a.set_title('Average')
-    elif i < args.batch_size + 1:
-        a.set_title(f'Batch {i}')
+    if i < music_graphs:
+        a.set_title(f'Music Channel {i + 1}')
+        a.plot(notes, note_chorale[i])
+        lines.append(a.plot(notes, [0] * max(chorale.shape))[0])
+    elif i < total_graphs:
+        a.set_title(f'Batch {i - music_graphs + 1}')
+        a.plot(notes, np.mean(note_chorale, axis=0))
+        lines.append(a.plot(notes, [0] * max(chorale.shape))[0])
     else:
         fig.delaxes(a)
-    if i < args.batch_size + 1:
-        a.plot(notes, note_chorale)
-        lines.append(a.plot(notes, [0] * len(chorale))[0])
 fig.suptitle('Epoch 0')
-fig.text(0.5, 0.04, 'Time step (in quarter-notes ♩)', ha='center')
-fig.text(0.04, 0.5, 'Note (in MIDI key values)', va='center', rotation='vertical')
+fig.text(0.5, 0.04, 'Time step', ha='center')
+fig.text(0.04, 0.5, 'Note', va='center', rotation='vertical')
 mgr = plt.get_current_fig_manager().window.state('zoomed')
 plt.show()
 
@@ -95,9 +115,10 @@ for i in range(1, args.epochs + 1):
     
     if step_i % args.framerate == 0:
         xn = x.numpy()
-        lines[0].set_ydata([float_to_note(j) for j in np.mean(xn, axis=0)[:, :, -1].flatten().tolist()[args.past_notes - 1:]])
-        for key, val in enumerate(lines[1:]):
-            val.set_ydata([float_to_note(j) for j in xn[key, :, :, -1].flatten().tolist()[args.past_notes - 1:]])
+        for j in range(music_graphs):
+            lines[j].set_ydata([scale(k) for k in np.mean(xn, axis=0)[j, :, -1].flatten().tolist()[args.past_notes - 1:]])
+        for j in range(batch_graphs):
+            lines[music_graphs + j].set_ydata([scale(k) for k in np.mean(xn, axis=1)[j, :, -1].flatten().tolist()[args.past_notes - 1:]])
         fig.suptitle(f'Epoch {i - 1}')
         plt.gcf().canvas.draw()
         plt.gcf().canvas.flush_events()
