@@ -1,34 +1,17 @@
 import argparse
-import matplotlib.pyplot as plt
 import numpy as np
-
-from mido import MidiFile
+import pretty_midi
+import sys
 
 parser = argparse.ArgumentParser('Convert MIDI files to numpy')
-parser.add_argument('-i', '--input-file', dest='input_filename', type=str, help='File to read from', required=True)
+parser.add_argument('-i', '--input-file', dest='input_filename', type=str, default=None, help='File to read from')
 parser.add_argument('-o', '--output-file', dest='output_filename', type=str, default='output', help='File to save output')
 args = parser.parse_args()
 
-retval = []
-tempos = []
-mid = MidiFile(args.input_filename)
-for i, track in enumerate(mid.tracks):
-    t = []
-    time = 0
-    print(f'Track {i}: {track.name}')
-    for msg in track:
-        if msg.is_meta and msg.type == 'set_tempo':
-            tempos.append((msg.tempo, msg.time))
-        if msg.type == 'note_on':
-            t += [msg.note] * int(np.ceil(msg.time / mid.ticks_per_beat))
-    retval.append(t)
+def midi_to_chroma(midi_file):
+    return pretty_midi.PrettyMIDI(midi_file).get_chroma()
 
-root = int(np.ceil(np.sqrt(len(mid.tracks))))
-fig, axs = plt.subplots(root, root)
-
-for i, a in enumerate(np.asarray(axs).flatten()):
-    if i < len(mid.tracks) and len(retval[i]) > 0:
-        a.plot(retval[i])
-    else:
-        fig.delaxes(a)
-plt.show()
+if args.input_filename is None:
+    sys.exit('Need a file to convert!')
+elif '.mid' in args.input_filename or '.midi' in args.input_filename:
+    np.save(args.output_filename, midi_to_chroma(args.input_filename))
