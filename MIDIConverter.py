@@ -4,7 +4,7 @@ import pretty_midi
 import sys
 
 def midi_to_chroma(midi_file):
-    return pretty_midi.PrettyMIDI(midi_file).get_chroma(fs=4)
+    return pretty_midi.PrettyMIDI(midi_file).get_chroma(fs=2)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Convert MIDI files to numpy')
