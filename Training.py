@@ -1,4 +1,5 @@
 import argparse
+import ffmpeg
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
@@ -104,6 +105,8 @@ fig.text(0.04, 0.5, 'Note', va='center', rotation='vertical')
 mgr = plt.get_current_fig_manager().window.state('zoomed')
 plt.show()
 
+framenum = 0
+
 for i in range(1, args.epochs + 1):
     x0 = np.repeat(seed[None, ...], args.batch_size, 0)
     x, loss = train_step(x0)
@@ -122,5 +125,9 @@ for i in range(1, args.epochs + 1):
         fig.suptitle(f'Epoch {i - 1}')
         plt.gcf().canvas.draw()
         plt.gcf().canvas.flush_events()
+        plt.savefig(f'./outputs/epoch-{framenum}.jpg')
+        framenum += 1
+
+ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.mp4').run()
 
 suspend = input('\nPress ENTER to exit')

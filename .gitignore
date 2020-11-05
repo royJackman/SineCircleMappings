@@ -131,3 +131,4 @@ dmypy.json
 *.lisp*
 *.mid
 *.midi
+*.jpg
