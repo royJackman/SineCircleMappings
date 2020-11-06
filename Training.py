@@ -17,6 +17,7 @@ parser.add_argument('-f', '--framerate', type=int, dest='framerate', default=20,
 parser.add_argument('-g', '--graphing', action='store_true', dest='graphing', default=False, help='Print chorale and exit')
 parser.add_argument('-m', '--midi-file', type=str, dest='midi_file', default=None, help='MIDI file to process, will override chorale')
 parser.add_argument('-p', '--past-notes', type=int, dest='past_notes', default=16, help='How far into the past to stretch the convolutional window')
+parser.add_argument('-r', '--chroma-frequency', type=int, dest='chroma_frequency', default=4, help='MIDI to chroma sampling frequency')
 parser.add_argument('-w', '--width', type=int, dest='width', default=1, help='The width of the convolutional window, how many other notes the model can see')
 args = parser.parse_args()
 
@@ -26,7 +27,7 @@ if args.midi_file is None:
     notes = range(len(chorale))
     chorale = np.array(chorale).reshape((1, -1))
 else:
-    chorale = midi_to_chroma(args.midi_file)
+    chorale = midi_to_chroma(args.midi_file, fs=args.chroma_frequency)
     note_chorale = (chorale - np.min(chorale))/(np.max(chorale) - np.min(chorale))
     notes = range(note_chorale.shape[1])
 
