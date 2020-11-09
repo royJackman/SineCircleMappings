@@ -129,6 +129,6 @@ for i in range(1, args.epochs + 1):
         plt.savefig(f'./outputs/epoch-{framenum}.jpg')
         framenum += 1
 
-ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.mp4').run()
+ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.gif').run()
 
 suspend = input('\nPress ENTER to exit')
