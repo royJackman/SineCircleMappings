@@ -134,3 +134,5 @@ dmypy.json
 *.jpg
 *.zip
 *.mp4
+*.key
+*.ppk

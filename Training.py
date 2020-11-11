@@ -18,6 +18,7 @@ parser.add_argument('-g', '--graphing', action='store_true', dest='graphing', de
 parser.add_argument('-m', '--midi-file', type=str, dest='midi_file', default=None, help='MIDI file to process, will override chorale')
 parser.add_argument('-p', '--past-notes', type=int, dest='past_notes', default=16, help='How far into the past to stretch the convolutional window')
 parser.add_argument('-r', '--chroma-frequency', type=int, dest='chroma_frequency', default=4, help='MIDI to chroma sampling frequency')
+parser.add_argument('-s', '--slurm', action='store_true', dest='slurm', default=False, help='Just the learning')
 parser.add_argument('-w', '--width', type=int, dest='width', default=1, help='The width of the convolutional window, how many other notes the model can see')
 args = parser.parse_args()
 
@@ -104,7 +105,9 @@ fig.suptitle('Epoch 0')
 fig.text(0.5, 0.04, 'Time step', ha='center')
 fig.text(0.04, 0.5, 'Note', va='center', rotation='vertical')
 mgr = plt.get_current_fig_manager().window.state('zoomed')
-plt.show()
+
+if not args.slurm:
+    plt.show()
 
 framenum = 0
 
@@ -115,7 +118,8 @@ for i in range(1, args.epochs + 1):
     step_i = len(loss_log)
     loss_log.append(loss.numpy())
 
-    print('\r step: %d, log10(loss): %.3f'%(i+1, np.log10(loss)), end='')
+    if not args.slurm:
+        print('\r step: %d, log10(loss): %.3f'%(i+1, np.log10(loss)), end='')
     
     if step_i % args.framerate == 0:
         xn = x.numpy()
@@ -129,6 +133,6 @@ for i in range(1, args.epochs + 1):
         plt.savefig(f'./outputs/epoch-{framenum}.jpg')
         framenum += 1
 
-ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.gif').run()
-
-suspend = input('\nPress ENTER to exit')
+if not args.slurm:
+    ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.gif').run()
+    suspend = input('\nPress ENTER to exit')
