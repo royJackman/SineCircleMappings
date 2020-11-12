@@ -6,11 +6,14 @@
 #SBATCH --output=./log/res_%j.txt
 #SBATCH -e ./log/res_%j.err
 
-module load python3/current
-pip3 install --user numpy tensorflow pretty_midi matplotlib ffmpeg-python midiutil pygame
+source ~/miniconda3/etc/profile.d/conda.sh
 
-echo "Starting job"
+conda create -y --name py38 python=3.8
+conda install --force-reinstall -y -q --name py38 -c conda-forge --file requirements.txt
+conda activate py38
 
-python3 $HOME/CAMusic/Training.py -s -m "$HOME/CAMusic/midis/linkin_park-one_step_closer.mid" -e 100000 -w 12
+python3 ~/CAMusic/Training.py -s -m ~/CAMusic/midis/linkin_park-one_step_closer.mid -e 100000 -w 12
+
+conda deactivate
 
 exit
