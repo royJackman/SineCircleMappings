@@ -9,8 +9,8 @@
 module load python3/current
 pip3 install --user numpy tensorflow pretty_midi matplotlib ffmpeg-python midiutil pygame
 
-echo Starting job
+echo "Starting job"
 
-python3 $HOME/CAMusic/Training.py -s -m '$HOME/CAMusic/midis/linkin_park-one_step_closer.mid' -e 100000 -w 12
+python3 $HOME/CAMusic/Training.py -s -m "$HOME/CAMusic/midis/linkin_park-one_step_closer.mid" -e 100000 -w 12
 
 exit
