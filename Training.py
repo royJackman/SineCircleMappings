@@ -118,8 +118,7 @@ for i in range(1, args.epochs + 1):
     step_i = len(loss_log)
     loss_log.append(loss.numpy())
 
-    if not args.slurm:
-        print('\r step: %d, log10(loss): %.3f'%(i+1, np.log10(loss)), end='')
+    print('\r step: %d, log10(loss): %.3f'%(i+1, np.log10(loss)), end='')
     
     if step_i % args.framerate == 0:
         xn = x.numpy()
