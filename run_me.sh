@@ -10,7 +10,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 
 conda activate py38
 
-python3 ~/CAMusic/Training.py -s -m ~/CAMusic/midis/linkin_park-one_step_closer.mid -e 100000 -w 12
+python3 ~/CAMusic/Training.py -s -o ~/CAMusic/outputs -m ~/CAMusic/midis/linkin_park-one_step_closer.mid -e 100000 -w 12
 
 conda deactivate
 
