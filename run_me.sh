@@ -4,7 +4,8 @@
 #SBATCH --mem=8000
 #SBATCH --output=./log/res_%j.txt
 #SBATCH -e ./log/res_%j.err
-#SBATCH --partition=2080ti-short
+#SBATCH --partition=2080ti-long
+#SBATCH --cpus-per-task=32
 
 source ~/miniconda3/etc/profile.d/conda.sh
 
