@@ -16,6 +16,7 @@ parser.add_argument('-f', '--framerate', type=int, dest='framerate', default=20,
 parser.add_argument('-g', '--graphing', action='store_true', dest='graphing', default=False, help='Print chorale and exit')
 parser.add_argument('-m', '--midi-file', type=str, dest='midi_file', default=None, help='MIDI file to process, will override chorale')
 parser.add_argument('-p', '--past-notes', type=int, dest='past_notes', default=16, help='How far into the past to stretch the convolutional window')
+parser.add_argument('-o', '--output-destination', type=str, dest='output_destination', default='./outputs', help='Folder to save figures')
 parser.add_argument('-r', '--chroma-frequency', type=int, dest='chroma_frequency', default=4, help='MIDI to chroma sampling frequency')
 parser.add_argument('-s', '--slurm', action='store_true', dest='slurm', default=False, help='Just the learning')
 parser.add_argument('-w', '--width', type=int, dest='width', default=1, help='The width of the convolutional window, how many other notes the model can see')
@@ -132,7 +133,7 @@ for i in range(1, args.epochs + 1):
         fig.suptitle(f'Epoch {i - 1}')
         plt.gcf().canvas.draw()
         plt.gcf().canvas.flush_events()
-        plt.savefig(f'./outputs/epoch-{framenum}.jpg')
+        plt.savefig(f'{args.output_destination}/epoch-{framenum}.jpg')
         framenum += 1
 
 if not args.slurm:
