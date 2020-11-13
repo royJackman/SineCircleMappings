@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
 #SBATCH --job-name=CAMusic
-#SBATCH --time=00-3:59:59
 #SBATCH --mem=8000
 #SBATCH --output=./log/res_%j.txt
 #SBATCH -e ./log/res_%j.err
+#SBATCH --partition=2080ti-short
 
 source ~/miniconda3/etc/profile.d/conda.sh
 
