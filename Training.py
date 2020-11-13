@@ -5,7 +5,7 @@ import sys
 import tensorflow as tf
 
 from CAModel import CAModel
-from DataLoader import list_chorales, float_to_note
+from DataLoader import float_to_note
 from MIDIConverter import midi_to_chroma
 
 parser = argparse.ArgumentParser('Train a model on a midi file')
@@ -25,7 +25,8 @@ if not args.slurm:
     import ffmpeg
 
 if args.midi_file is None:
-    chorale = list_chorales[args.chorale]
+    from DataLoader import list_chorales
+    chorale = list_chorales()[args.chorale]
     note_chorale = [float_to_note(i) for i in chorale]
     notes = range(len(chorale))
     chorale = np.array(chorale).reshape((1, -1))

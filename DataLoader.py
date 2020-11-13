@@ -1,7 +1,6 @@
 import numpy as np
 
-with open('bach_chorales.npy', 'rb') as f:
-    bach_chorales = np.load(f, allow_pickle=True)
+def float_to_note(num): return round(num * 16) + 59 if num > 0 else 0
 
 def listify(chorale):
     retval = []
@@ -12,7 +11,12 @@ def listify(chorale):
             retval.append((note[1] - 59)/16.0)
     return retval
 
-list_chorales = np.array([listify(chorale) for chorale in bach_chorales])
+def list_chorales():
+    with open('bach_chorales.npy', 'rb') as f:
+        bach_chorales = np.load(f, allow_pickle=True)
+    
+    return np.array([listify(chorale) for chorale in bach_chorales])
+
 
 def stagger(list_chorale, window=16):
     buffer = [0] * window
@@ -26,5 +30,3 @@ def stagger(list_chorale, window=16):
     X.append(buffer)
     Y.append(0)
     return np.array(X), np.array(Y)
-
-def float_to_note(num): return round(num * 16) + 59 if num > 0 else 0
