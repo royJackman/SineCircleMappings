@@ -107,9 +107,9 @@ for i, a in enumerate(np.asarray(axs).flatten()):
 fig.suptitle('Epoch 0')
 fig.text(0.5, 0.04, 'Time step', ha='center')
 fig.text(0.04, 0.5, 'Note', va='center', rotation='vertical')
-mgr = plt.get_current_fig_manager().window.state('zoomed')
 
 if not args.slurm:
+    mgr = plt.get_current_fig_manager().window.state('zoomed')
     plt.show()
 
 framenum = 0
