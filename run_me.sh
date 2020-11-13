@@ -6,8 +6,6 @@
 #SBATCH --output=./log/res_%j.txt
 #SBATCH -e ./log/res_%j.err
 
-source ~/miniconda3/etc/profile.d/conda.sh
-
 conda activate py38
 
 python3 ~/CAMusic/Training.py -s -m ~/CAMusic/midis/linkin_park-one_step_closer.mid -e 100000 -w 12
