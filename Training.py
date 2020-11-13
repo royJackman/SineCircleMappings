@@ -1,5 +1,4 @@
 import argparse
-import ffmpeg
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
@@ -21,6 +20,9 @@ parser.add_argument('-r', '--chroma-frequency', type=int, dest='chroma_frequency
 parser.add_argument('-s', '--slurm', action='store_true', dest='slurm', default=False, help='Just the learning')
 parser.add_argument('-w', '--width', type=int, dest='width', default=1, help='The width of the convolutional window, how many other notes the model can see')
 args = parser.parse_args()
+
+if not args.slurm:
+    import ffmpeg
 
 if args.midi_file is None:
     chorale = list_chorales[args.chorale]
