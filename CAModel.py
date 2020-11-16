@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as np
 
+tf.config.run_functions_eagerly(True)
+
 class CAModel(tf.keras.Model):
     def __init__(self, past_notes=16, width=1):
         super().__init__()
