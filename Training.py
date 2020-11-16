@@ -140,7 +140,7 @@ for i in range(1, args.epochs + 1):
         framenum += 1
 
 if args.slurm:
-    ca.save(args.output_name)
+    ca.save(args.output_name + '.h5')
 else:
     ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.gif').run()
     suspend = input('\nPress ENTER to exit')
