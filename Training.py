@@ -1,5 +1,4 @@
 import argparse
-import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import tensorflow as tf
@@ -15,6 +14,7 @@ parser.add_argument('-e', '--epochs', type=int, dest='epochs', default=8000, hel
 parser.add_argument('-f', '--framerate', type=int, dest='framerate', default=20, help='Number of epochs between graph updates')
 parser.add_argument('-g', '--graphing', action='store_true', dest='graphing', default=False, help='Print chorale and exit')
 parser.add_argument('-m', '--midi-file', type=str, dest='midi_file', default=None, help='MIDI file to process, will override chorale')
+parser.add_argument('-n', '--name', type=str, dest='output_name', default='output', help='Name of the weight output file')
 parser.add_argument('-p', '--past-notes', type=int, dest='past_notes', default=16, help='How far into the past to stretch the convolutional window')
 parser.add_argument('-o', '--output-destination', type=str, dest='output_destination', default='./outputs', help='Folder to save figures')
 parser.add_argument('-r', '--chroma-frequency', type=int, dest='chroma_frequency', default=4, help='MIDI to chroma sampling frequency')
@@ -24,6 +24,7 @@ args = parser.parse_args()
 
 if not args.slurm:
     import ffmpeg
+    import matplotlib.pyplot as plt
 
 if args.midi_file is None:
     from DataLoader import list_chorales
@@ -37,6 +38,7 @@ else:
     notes = range(note_chorale.shape[1])
 
 if args.graphing:
+    import matplotlib.pyplot as plt
     if note_chorale is list:
         plt.plot(notes, note_chorale)
         plt.title(f'Chorale {args.chorale}')
@@ -82,34 +84,35 @@ def train_step(x):
     trainer.apply_gradients(zip(grads, ca.weights))
     return x, loss
 
-lines = []
-plt.ion()
-plt.rcParams['axes.grid'] = True
-music_graphs = 1 if args.midi_file is None else 12
-batch_graphs = args.batch_size if args.midi_file is None else 0
-total_graphs = music_graphs + batch_graphs
-root = np.sqrt(total_graphs)
-rows = np.floor(root)
-cols = np.ceil(root)
-if rows * cols < total_graphs:
-    rows += 1
-fig, axs = plt.subplots(int(rows), int(cols), sharex=True, sharey=True)
-for i, a in enumerate(np.asarray(axs).flatten()):
-    if i < music_graphs:
-        a.set_title(f'Music Channel {i + 1}')
-        a.plot(notes, note_chorale[i])
-        lines.append(a.plot(notes, [0] * max(chorale.shape))[0])
-    elif i < total_graphs:
-        a.set_title(f'Batch {i - music_graphs + 1}')
-        a.plot(notes, np.mean(note_chorale, axis=0))
-        lines.append(a.plot(notes, [0] * max(chorale.shape))[0])
-    else:
-        fig.delaxes(a)
-fig.suptitle('Epoch 0')
-fig.text(0.5, 0.04, 'Time step', ha='center')
-fig.text(0.04, 0.5, 'Note', va='center', rotation='vertical')
 
 if not args.slurm:
+    lines = []
+    plt.ion()
+    plt.rcParams['axes.grid'] = True
+    music_graphs = 1 if args.midi_file is None else 12
+    batch_graphs = args.batch_size if args.midi_file is None else 0
+    total_graphs = music_graphs + batch_graphs
+    root = np.sqrt(total_graphs)
+    rows = np.floor(root)
+    cols = np.ceil(root)
+    if rows * cols < total_graphs:
+        rows += 1
+    fig, axs = plt.subplots(int(rows), int(cols), sharex=True, sharey=True)
+    for i, a in enumerate(np.asarray(axs).flatten()):
+        if i < music_graphs:
+            a.set_title(f'Music Channel {i + 1}')
+            a.plot(notes, note_chorale[i])
+            lines.append(a.plot(notes, [0] * max(chorale.shape))[0])
+        elif i < total_graphs:
+            a.set_title(f'Batch {i - music_graphs + 1}')
+            a.plot(notes, np.mean(note_chorale, axis=0))
+            lines.append(a.plot(notes, [0] * max(chorale.shape))[0])
+        else:
+            fig.delaxes(a)
+    fig.suptitle('Epoch 0')
+    fig.text(0.5, 0.04, 'Time step', ha='center')
+    fig.text(0.04, 0.5, 'Note', va='center', rotation='vertical')
+
     mgr = plt.get_current_fig_manager().window.state('zoomed')
     plt.show()
 
@@ -124,7 +127,7 @@ for i in range(1, args.epochs + 1):
 
     print('\r step: %d, log10(loss): %.3f'%(i+1, np.log10(loss)), end='')
     
-    if step_i % args.framerate == 0:
+    if not args.slurm and step_i % args.framerate == 0:
         xn = x.numpy()
         for j in range(music_graphs):
             lines[j].set_ydata([scale(k) for k in np.mean(xn, axis=0)[j, :, -1].flatten().tolist()[args.past_notes - 1:]])
@@ -133,9 +136,11 @@ for i in range(1, args.epochs + 1):
         fig.suptitle(f'Epoch {i - 1}')
         plt.gcf().canvas.draw()
         plt.gcf().canvas.flush_events()
-        plt.savefig(f'{args.output_destination}/epoch-{framenum}.jpg')
+        plt.savefig(f'{args.output_destination}/frame-{framenum.zfill(5)}.jpg')
         framenum += 1
 
-if not args.slurm:
+if args.slurm:
+    ca.save_weights(args.output_name)
+else:
     ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.gif').run()
     suspend = input('\nPress ENTER to exit')
