@@ -141,7 +141,7 @@ for i in range(1, args.epochs + 1):
         framenum += 1
 
 if args.slurm:
-    ca.save(args.output_name, overwrite=True, include_optimizer=True, save_format='tf')
+    tf.keras.models.save_model(ca, args.output_name, overwrite=True, include_optimizer=True, save_format='tf')
 else:
     ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.gif').run()
     suspend = input('\nPress ENTER to exit')
