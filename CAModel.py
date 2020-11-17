@@ -12,7 +12,7 @@ class CAModel(tf.keras.Model):
 
         self.dmodel = tf.keras.Sequential([
             tf.keras.layers.Conv2D(self.filters, 1, activation=tf.nn.relu),
-            tf.keras.layers.Conv2D(self.past_notes + 1, 1, activation=None, kernel_initializer=tf.zeros_initializer)
+            tf.keras.layers.Conv2D(self.past_notes + 1, 1, activation=None, kernel_initializer=tf.keras.initializers.zeros())
         ])
 
         self(tf.zeros([1, self.width, self.past_notes, self.past_notes + 1]))
