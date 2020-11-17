@@ -4,13 +4,14 @@ import numpy as np
 tf.config.run_functions_eagerly(True)
 
 class CAModel(tf.keras.Model):
-    def __init__(self, past_notes=16, width=1):
+    def __init__(self, past_notes=16, width=1, filters=128):
         super().__init__()
         self.past_notes = past_notes
         self.width = width
+        self.filters = filters
 
         self.dmodel = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(128, 1, activation=tf.nn.relu),
+            tf.keras.layers.Conv2D(self.filters, 1, activation=tf.nn.relu),
             tf.keras.layers.Conv2D(self.past_notes + 1, 1, activation=None, kernel_initializer=tf.zeros_initializer)
         ])
 

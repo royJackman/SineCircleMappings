@@ -13,6 +13,7 @@ parser.add_argument('-c', '--chorale', type=int, dest='chorale', default=0, help
 parser.add_argument('-e', '--epochs', type=int, dest='epochs', default=8000, help='Number of learning epochs')
 parser.add_argument('-f', '--framerate', type=int, dest='framerate', default=20, help='Number of epochs between graph updates')
 parser.add_argument('-g', '--graphing', action='store_true', dest='graphing', default=False, help='Print chorale and exit')
+parser.add_argument('-i', '--filters', type=int, dest='filters', default=128, help='Number of convolutional filters')
 parser.add_argument('-m', '--midi-file', type=str, dest='midi_file', default=None, help='MIDI file to process, will override chorale')
 parser.add_argument('-n', '--name', type=str, dest='output_name', default='output', help='Name of the weight output file')
 parser.add_argument('-p', '--past-notes', type=int, dest='past_notes', default=16, help='How far into the past to stretch the convolutional window')
@@ -62,7 +63,7 @@ seed[:, args.past_notes-1, -1] = note_chorale[:, 0]
 def loss_f(x): return tf.reduce_mean(tf.square(x[..., -1] - target))
 def scale(x): return x if args.midi_file is not None else float_to_note(x)
 
-ca = CAModel(past_notes=args.past_notes, width=args.width)
+ca = CAModel(past_notes=args.past_notes, width=args.width, filters=args.filters)
 
 loss_log = []
 
