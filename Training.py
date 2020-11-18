@@ -85,7 +85,6 @@ def train_step(x):
     trainer.apply_gradients(zip(grads, ca.weights))
     return x, loss
 
-
 if not args.slurm:
     lines = []
     plt.ion()
