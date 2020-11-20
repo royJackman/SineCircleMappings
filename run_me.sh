@@ -16,7 +16,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 
 conda activate py38
 
-python3 ~/CAMusic/Training.py -s -o ~/CAMusic/outputs -m ~/CAMusic/midis/linkin_park-one_step_closer.mid -e 200000 -w 12 -b 2 -i 24 -n b2r4model
+python3 ~/CAMusic/Training.py -b 2 -e 50 -i 24 -m ~/CAMusic/midis/linkin_park-one_step_closer.mid -n LP-OSC-$now-slurm -o ~/CAMusic/outputs -r 2 -s -w 12
 
 conda deactivate
 

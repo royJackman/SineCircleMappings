@@ -64,10 +64,9 @@ seed[:, args.past_notes-1, -1] = note_chorale[:, 0]
 def loss_f(x): return tf.reduce_mean(tf.square(x[..., -1] - target))
 def scale(x): return x if args.midi_file is not None else float_to_note(x)
 
-if args.model is None:
-    ca = CAModel(past_notes=args.past_notes, width=args.width, filters=args.filters)
-else:
-    ca = tf.keras.models.load_model(args.model)
+ca = CAModel(past_notes=args.past_notes, width=args.width, filters=args.filters)
+if not args.model is None:
+    ca.load_weights(args.model)
 
 loss_log = []
 
@@ -144,7 +143,7 @@ for i in range(1, args.epochs + 1):
         framenum += 1
 
 if args.slurm:
-    tf.keras.models.save_model(ca, args.output_name, overwrite=True, include_optimizer=True, save_format='tf')
+    ca.save_weights(args.output_name, overwrite=True)
 else:
     ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.gif').run()
     suspend = input('\nPress ENTER to exit')
