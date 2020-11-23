@@ -21,6 +21,7 @@ parser.add_argument('-p', '--past-notes', type=int, dest='past_notes', default=1
 parser.add_argument('-o', '--output-destination', type=str, dest='output_destination', default='./outputs', help='Folder to save figures')
 parser.add_argument('-r', '--chroma-frequency', type=int, dest='chroma_frequency', default=4, help='MIDI to chroma sampling frequency')
 parser.add_argument('-s', '--slurm', action='store_true', dest='slurm', default=False, help='Just the learning')
+parser.add_argument('-t', '--testing', type=int, default=None, dest='testing', help='How many rounds to test the model')
 parser.add_argument('-w', '--width', type=int, dest='width', default=1, help='The width of the convolutional window, how many other notes the model can see')
 args = parser.parse_args()
 
@@ -69,6 +70,17 @@ if not args.model is None:
     ca.load_weights(args.model)
 
 loss_log = []
+
+if not args.testing is None:
+    from tqdm import tqdm
+    import matplotlib.pyplot as plt
+    x0 = np.repeat(seed[None, ...], args.batch_size, 0)
+    for i in tqdm(range(args.testing)):
+        x0 = ca(x0)
+        loss_log.append(np.log10(tf.reduce_mean(loss_f(x0))))
+    plt.plot(loss_log)
+    plt.show()
+    sys.exit('Testing complete')
 
 lr = 2e-3
 lr_sched = tf.keras.optimizers.schedules.PiecewiseConstantDecay([2000], [lr, lr * 0.1])
