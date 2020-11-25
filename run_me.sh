@@ -4,7 +4,7 @@
 #SBATCH --mem=16000
 #SBATCH --output=./log/res_%j.txt
 #SBATCH -e ./log/res_%j.err
-#SBATCH --partition=2080ti-long
+#SBATCH --partition=2080ti-short
 #SBATCH --cpus-per-task=32
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=royjackman@umass.edu	
@@ -18,7 +18,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 
 conda activate py38
 
-python3 ~/CAMusic/Training.py -b 2 -e 100000 -i 24 -l LP-OSC-date-slurm -m ~/CAMusic/midis/linkin_park-one_step_closer.mid -n LP-OSC-date-slurm -o ~/CAMusic/outputs -r 2 -s -w 12
+python3 ~/CAMusic/Training.py -b 1 -e 10000 -i 24 -m ~/CAMusic/midis/hallelujah.mid -n hallelujah-slurm -o ~/CAMusic/outputs -r 2 -s -w 12
 
 conda deactivate
 

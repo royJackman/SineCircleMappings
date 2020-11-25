@@ -159,3 +159,7 @@ if args.slurm:
 else:
     ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.gif').run()
     suspend = input('\nPress ENTER to exit')
+
+import json
+with open(args.model or '' + '-loss.json') as filename:
+    json.dump(loss_log, filename)
