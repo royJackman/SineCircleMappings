@@ -151,7 +151,7 @@ for i in range(1, args.epochs + 1):
         fig.suptitle(f'Epoch {i - 1}')
         plt.gcf().canvas.draw()
         plt.gcf().canvas.flush_events()
-        plt.savefig(f'{args.output_destination}/frame-{framenum.zfill(5)}.jpg')
+        plt.savefig(f'{args.output_destination}/frame-{str(framenum).zfill(5)}.jpg')
         framenum += 1
 
 if args.slurm:
