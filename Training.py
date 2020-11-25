@@ -154,9 +154,10 @@ for i in range(1, args.epochs + 1):
         plt.savefig(f'{args.output_destination}/frame-{str(framenum).zfill(5)}.jpg')
         framenum += 1
 
-if args.slurm:
-    ca.save_weights(args.output_name, overwrite=True)
-else:
+
+ca.save_weights(args.output_name or 'weights', overwrite=True)
+
+if not args.slurm:
     ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.gif').run()
     suspend = input('\nPress ENTER to exit')
 
