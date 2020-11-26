@@ -163,4 +163,4 @@ if not args.slurm:
 
 import json
 with open(args.model or '' + '-loss.json') as filename:
-    json.dump(loss_log, filename)
+    json.dump(np.array(loss_log).tolist(), filename)
