@@ -162,5 +162,5 @@ if not args.slurm:
     suspend = input('\nPress ENTER to exit')
 
 import json
-with open((args.model or '') + '-loss.json') as filename:
+with open((args.model or '') + '-loss.json', 'w') as filename:
     json.dump(np.array(loss_log).tolist(), filename)
