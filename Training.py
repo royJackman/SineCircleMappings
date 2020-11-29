@@ -158,7 +158,7 @@ for i in range(1, args.epochs + 1):
 ca.save_weights(args.output_name or 'weights', overwrite=True)
 
 if not args.slurm:
-    ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.gif').run()
+    #ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.gif').run()
     suspend = input('\nPress ENTER to exit')
 
 import json
