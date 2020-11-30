@@ -18,7 +18,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 
 conda activate py38
 
-python3 ~/CAMusic/Training.py -b 1 -e 10000 -i 24 -m ~/CAMusic/midis/hallelujah.mid -n hallelujah-slurm -o ~/CAMusic/outputs -r 2 -s -w 12
+python3 ~/CAMusic/Training.py -b 1 -e 10000 -i 24 -m ~/CAMusic/midis/hallelujah.mid -n hallelujah-slurm -o ~/CAMusic/outputs -p 4 -r 4 -s -w 12
 
 conda deactivate
 
