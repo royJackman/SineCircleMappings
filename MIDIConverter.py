@@ -6,6 +6,9 @@ import sys
 def midi_to_chroma(midi_file, fs=4):
     return pretty_midi.PrettyMIDI(midi_file).get_chroma(fs=fs)
 
+def midi_to_piano_roll(midi_file, fs=4):
+    return pretty_midi.PrettyMIDI(midi_file).get_piano_roll(fs=fs)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Convert MIDI files to numpy')
     parser.add_argument('-i', '--input-file', dest='input_filename', type=str, default=None, help='File to read from')
