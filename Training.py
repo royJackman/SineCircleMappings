@@ -5,9 +5,10 @@ import tensorflow as tf
 
 from CAModel import CAModel
 from DataLoader import float_to_note
-from MIDIConverter import midi_to_chroma
+from MIDIConverter import midi_to_chroma, midi_to_piano_roll
 
 parser = argparse.ArgumentParser('Train a model on a midi file')
+parser.add_argument('-a', '--piano-roll', action='store_true', dest='piano_roll', default=False, help='Use piano roll instead of chromagraph')
 parser.add_argument('-b', '--batch-size', type=int, dest='batch_size', default=8, help='Set batch size')
 parser.add_argument('-c', '--chorale', type=int, dest='chorale', default=0, help='Which chorale to use as a model')
 parser.add_argument('-e', '--epochs', type=int, dest='epochs', default=8000, help='Number of learning epochs')
@@ -36,7 +37,7 @@ if args.midi_file is None:
     notes = range(len(chorale))
     chorale = np.array(chorale).reshape((1, -1))
 else:
-    chorale = midi_to_chroma(args.midi_file, fs=args.chroma_frequency)
+    chorale = midi_to_piano_roll(args.midi_file, fs=args.chroma_frequency) if args.piano_roll else midi_to_chroma(args.midi_file, fs=args.chroma_frequency)
     note_chorale = (chorale - np.min(chorale))/(np.max(chorale) - np.min(chorale))
     notes = range(note_chorale.shape[1])
 
