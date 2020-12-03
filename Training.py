@@ -66,7 +66,7 @@ seed[:, args.past_notes-1, -1] = note_chorale[:, 0]
 def loss_f(x): return tf.reduce_mean(tf.square(x[..., -1] - target))
 def scale(x): return x if args.midi_file is not None else float_to_note(x)
 
-ca = CAModel(past_notes=args.past_notes, width=args.width, filters=args.filters)
+ca = CAModel(past_notes=args.past_notes, width=args.width, filters=args.filters, piano_roll=args.piano_roll)
 if not args.model is None:
     ca.load_weights(args.model)
 
@@ -102,29 +102,34 @@ def train_step(x):
     return x, loss
 
 if not args.slurm:
-    lines = []
     plt.ion()
-    plt.rcParams['axes.grid'] = True
-    music_graphs = 1 if args.midi_file is None else 12
-    batch_graphs = args.batch_size if args.midi_file is None else 0
-    total_graphs = music_graphs + batch_graphs
-    root = np.sqrt(total_graphs)
-    rows = np.floor(root)
-    cols = np.ceil(root)
-    if rows * cols < total_graphs:
-        rows += 1
-    fig, axs = plt.subplots(int(rows), int(cols), sharex=True, sharey=True)
-    for i, a in enumerate(np.asarray(axs).flatten()):
-        if i < music_graphs:
-            a.set_title(f'Music Channel {i + 1}')
-            a.plot(notes, note_chorale[i])
-            lines.append(a.plot(notes, [0] * max(chorale.shape))[0])
-        elif i < total_graphs:
-            a.set_title(f'Batch {i - music_graphs + 1}')
-            a.plot(notes, np.mean(note_chorale, axis=0))
-            lines.append(a.plot(notes, [0] * max(chorale.shape))[0])
-        else:
-            fig.delaxes(a)
+    if args.piano_roll:
+        fig, axs = plt.subplots(2, 1)
+        axs[0].imshow(target, aspect='auto')
+        axs[1].imshow(tf.reduce_mean(np.repeat(seed[None, ...], args.batch_size, 0)[..., -1], 0), aspect='auto')
+    else:
+        lines = []
+        plt.rcParams['axes.grid'] = True
+        music_graphs = 1 if args.midi_file is None else 12
+        batch_graphs = args.batch_size if args.midi_file is None else 0
+        total_graphs = music_graphs + batch_graphs
+        root = np.sqrt(total_graphs)
+        rows = np.floor(root)
+        cols = np.ceil(root)
+        if rows * cols < total_graphs:
+            rows += 1
+        fig, axs = plt.subplots(int(rows), int(cols), sharex=True, sharey=True)
+        for i, a in enumerate(np.asarray(axs).flatten()):
+            if i < music_graphs:
+                a.set_title(f'Music Channel {i + 1}')
+                a.plot(notes, note_chorale[i])
+                lines.append(a.plot(notes, [0] * max(chorale.shape))[0])
+            elif i < total_graphs:
+                a.set_title(f'Batch {i - music_graphs + 1}')
+                a.plot(notes, np.mean(note_chorale, axis=0))
+                lines.append(a.plot(notes, [0] * max(chorale.shape))[0])
+            else:
+                fig.delaxes(a)
     fig.suptitle('Epoch 0')
     fig.text(0.5, 0.04, 'Time step', ha='center')
     fig.text(0.04, 0.5, 'Note', va='center', rotation='vertical')
@@ -145,10 +150,13 @@ for i in range(1, args.epochs + 1):
     
     if not args.slurm and step_i % args.framerate == 0:
         xn = x.numpy()
-        for j in range(music_graphs):
-            lines[j].set_ydata([scale(k) for k in np.mean(xn, axis=0)[j, :, -1].flatten().tolist()[args.past_notes - 1:]])
-        for j in range(batch_graphs):
-            lines[music_graphs + j].set_ydata([scale(k) for k in np.mean(xn, axis=1)[j, :, -1].flatten().tolist()[args.past_notes - 1:]])
+        if args.piano_roll:
+            axs[1].imshow(tf.reduce_mean(xn[..., -1], 0), aspect='auto')
+        else:
+            for j in range(music_graphs):
+                lines[j].set_ydata([scale(k) for k in np.mean(xn, axis=0)[j, :, -1].flatten().tolist()[args.past_notes - 1:]])
+            for j in range(batch_graphs):
+                lines[music_graphs + j].set_ydata([scale(k) for k in np.mean(xn, axis=1)[j, :, -1].flatten().tolist()[args.past_notes - 1:]])
         fig.suptitle(f'Epoch {i - 1}')
         plt.gcf().canvas.draw()
         plt.gcf().canvas.flush_events()
@@ -160,7 +168,7 @@ ca.save_weights(args.output_name or 'weights', overwrite=True)
 
 if not args.slurm:
     #ffmpeg.input('/outputs/*.jpg', framerate=25).output('output.gif').run()
-    suspend = input('\nPress ENTER to exit')
+    input('\nPress ENTER to exit')
 
 import json
 with open((args.model or '') + '-loss.json', 'w') as filename:
