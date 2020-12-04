@@ -136,3 +136,10 @@ dmypy.json
 *.mp4
 *.key
 *.ppk
+*.index
+*.data-*
+*.profile
+*.calltree
+*.json
+checkpoint
+*.pb
