@@ -163,7 +163,6 @@ for i in range(1, args.epochs + 1):
         plt.savefig(f'{args.output_destination}/frame-{str(framenum).zfill(5)}.jpg')
         framenum += 1
 
-
 ca.save_weights(args.output_name or 'weights', overwrite=True)
 
 if not args.slurm:
