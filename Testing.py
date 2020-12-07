@@ -15,7 +15,6 @@ parser.add_argument('-m', '--midi-file', type=str, dest='midi_file', required=Tr
 parser.add_argument('-p', '--piano-roll', action='store_true', dest='piano_roll', default=False, help='Use piano roll instead of chromagraph')
 args = parser.parse_args()
 
-
 loss_log = []
 
 ca = CAModel(past_notes=4, width=12, filters=24)
