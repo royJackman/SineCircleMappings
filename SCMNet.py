@@ -39,6 +39,15 @@ inp = np.array([[[0], [1], [2], [3], [4], [5], [6], [7]]])
 outp = np.array([[8]])
 x = torch.tensor(inp, dtype=torch.float)
 y = torch.tensor(outp, dtype=torch.float)
+
+steps = np.linspace(0, 2 * np.pi, 300, dtype=np.float32)
+x_np = np.sin(steps)
+y_np = np.cos(steps)
+plt.plot(steps, x_np, 'b-', label='input')
+plt.plot(steps, y_np, 'r-', label='target')
+plt.legend(loc='best')
+plt.show()
+
 epochs = 270
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
