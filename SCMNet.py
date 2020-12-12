@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import matplotlib.pyplot as plt
 
 device = torch.device('cpu')
 
@@ -16,17 +17,16 @@ class SCMNet(nn.Module):
         self.linear = nn.Linear(hidden_dim, output_size * 3)
         self.params = []
     
-    def forward(self, x):
-        batch_size = x.size(0)
-        hidden = self.init_hidden(batch_size)
+    def forward(self, x, hidden):
         theta_n = x
         x, hidden = self.rnn(x, hidden)
-        x = x.contiguous().view(-1, self.hidden_dim)
-        x = self.linear(x)
-        self.params = x
-        return scm(theta_n, x[0][0], x[0][1], x[0][2]), hidden
-        # return x, hidden
-    
+        
+        outs = []
+        for time_step in range(x.size(1)):
+            self.params = self.linear(x[:, time_step, :]).flatten()
+            outs.append(scm(theta_n, self.params[0], self.params[1], self.params[2]))
+        return torch.stack(outs, dim=1), hidden
+
     def init_hidden(self, batch_size):
         hidden = torch.zeros(self.n_layers, batch_size, self.hidden_dim).to(device)
         return hidden
@@ -34,33 +34,42 @@ class SCMNet(nn.Module):
 torch.manual_seed(0)
 model = SCMNet(1, 1, 12, 1)
 model = model.to(device)
-inp = np.array([[[0], [1], [2], [3], [4], [5], [6], [7]]])
-# outp = np.array([[[1], [2], [3], [4], [5], [6], [7], [8]]])
-outp = np.array([[8]])
-x = torch.tensor(inp, dtype=torch.float)
-y = torch.tensor(outp, dtype=torch.float)
 
-steps = np.linspace(0, 2 * np.pi, 300, dtype=np.float32)
-x_np = np.sin(steps)
-y_np = np.cos(steps)
-plt.plot(steps, x_np, 'b-', label='input')
-plt.plot(steps, y_np, 'r-', label='target')
-plt.legend(loc='best')
-plt.show()
+# steps = np.linspace(0, 2 * np.pi, 100, dtype=np.float32)
+# x_np = np.sin(steps)
+# y_np = np.cos(steps)
+# plt.plot(steps, x_np, 'b-', label='input')
+# plt.plot(steps, y_np, 'r-', label='target')
+# plt.legend(loc='best')
+# plt.show()
 
+hidden = None
 epochs = 270
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-x = x.to(device)
-for e in range(1, epochs + 1):
+
+plt.figure(1, figsize=(12, 5))
+plt.ion()
+
+for step in range(100):
+    start, end = step * np.pi, (step+1)*np.pi
+    steps = np.linspace(start, end, 10, dtype=np.float32, endpoint=False)
+    x_np = np.sin(steps)
+    y_np = np.cos(steps)
+    x = torch.from_numpy(x_np[np.newaxis, :, np.newaxis])
+    y = torch.from_numpy(y_np[np.newaxis, :, np.newaxis])
+
+    prediction, hidden = model(x, hidden)
+    hidden = hidden.data
+
+    loss = criterion(prediction, y)
     optimizer.zero_grad()
-    output, hidden = model(x)
-    output = output.to(device)
-    y = y.to(device)
-    loss = criterion(output, y)
     loss.backward()
     optimizer.step()
 
-    if e%15 == 0:
-        print('Epoch: {}/{}.............'.format(e, epochs), end=' ')
-        print("Loss: {:.6f}".format(loss.item()))
+    plt.plot(steps, y_np.flatten(), 'r-')
+    plt.plot(steps, np.mean(prediction.data.numpy()[0, :, :, 0], axis=0), 'b-')
+    plt.draw(); plt.pause(0.05)
+
+plt.ioff()
+plt.show()
