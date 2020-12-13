@@ -4,9 +4,12 @@ import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
 
+from sympy.parsing.sympy_parser import (parse_expr, standard_transformations, implicit_multiplication_application)
+
 parser = argparse.ArgumentParser('Continuously train SCMs on functions')
 parser.add_argument('-f', '--function', type=str, dest='func', default='line', help='Type of function to learn')
 parser.add_argument('-i', '--hidden_layers', type=int, dest='hidden_dim', default=12, help='Number of hidden recurrent nodes')
+parser.add_argument('-p', '--parse_function', type=str, dest='func_string', default=None, help='Custom function to learn, will override built-in functions')
 args = parser.parse_args()
 
 device = torch.device('cpu')
@@ -15,8 +18,13 @@ def scm(theta, alpha=1.0, k=1.0, omega=0.16): return alpha * theta + omega + (k/
 
 def generate_data(start, end, points):
     full = np.linspace(start, end, points+1)
-    if args.func == 'sine':
-        full = np.sin(full)
+    if args.func_string is None:
+        if args.func == 'sine':
+            full = np.sin(full)
+    else:
+        exp = parse_expr(args.func_string, transformations=(standard_transformations + (implicit_multiplication_application,)))
+        test = [exp.evalf(subs={'x': i}) for i in full]
+        full = np.asarray([exp.evalf(subs={'x': i}) for i in full]).astype('float')
     return full[:-1], full[1:]
 
 class SCMNet(nn.Module):
@@ -81,4 +89,4 @@ for step in range(epochs):
 
 plt.ioff()
 plt.show()
-print(model.params)
+print(model.params.detach().numpy())
