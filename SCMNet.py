@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser('Continuously train SCMs on functions')
 parser.add_argument('-f', '--function', type=str, dest='func', default='line', help='Type of function to learn')
 parser.add_argument('-i', '--hidden_layers', type=int, dest='hidden_dim', default=12, help='Number of hidden recurrent nodes')
 parser.add_argument('-p', '--parse_function', type=str, dest='func_string', default=None, help='Custom function to learn, will override built-in functions')
-parser.add_argument('-r', '--range', nargs='+', type=int, dest='range', default=[0, 10], help='Range of data to generate')
+parser.add_argument('-r', '--range', nargs='+', type=int, dest='range', default=[0, 100], help='Range of data to generate')
 args = parser.parse_args()
 
 device = torch.device('cpu')
