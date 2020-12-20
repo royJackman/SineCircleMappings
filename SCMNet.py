@@ -28,6 +28,7 @@ class SCMNet(nn.Module):
         super(SCMNet, self).__init__()
         self.input_size = input_size
         self.output_size = output_size
+        self.reservoir_size = reservoir_size
         self.input_spread = input_spread
         self.output_spread = output_spread
 
@@ -44,25 +45,30 @@ class SCMNet(nn.Module):
     
     def forward(self, x, reservoir_state):
         driven_state = reservoir_state + x * self.driver
+        dsmax = driven_state.max()
+        dsmin = driven_state.min()
+        driven_state = torch.div(torch.sub(driven_state, torch.ones(self.reservoir_size), alpha=dsmin.item()), dsmax.item() - dsmin.item())
         thetas = torch.matmul(driven_state, self.reservoir)
         thetas = tensor_scm(thetas, self.alphas, self.ks, self.omegas)
         return torch.sum(thetas[self.outputs]), thetas
 
 torch.manual_seed(0)
-model = SCMNet(1, 1, 10, 2, 4)
+model = torch.jit.script(SCMNet(1, 1, 10, 2, 4))
 reservoir0 = torch.rand(10)
 crit = nn.MSELoss()
-opti = torch.optim.Adam(model.parameters(), lr=0.01)
+opti = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
 for epoch in range(1):
     running_loss =0.0
-    for i in range(100):
-        x = i/100.0
-        y = (i + 1)/100.0
+    for i in range(100000):
+        x = torch.tensor(i/10000.0)
+        y = torch.tensor((i + 1)/10000.0)
         opti.zero_grad()
         out, reservoir0 = model(x, reservoir0)
-        loss = crit(out, torch.tensor(y))
+        loss = crit(out, y)
         opti.step()
-        print(loss.item())
+        running_loss += loss.item()
+        if i % 100 == 0:
+            print(f'{i/10000} finished, Avg error: {running_loss/(i+1)}')
 
 print('Done')
