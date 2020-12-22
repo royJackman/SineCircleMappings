@@ -71,13 +71,13 @@ class SCMNet(nn.Module):
 
 torch.manual_seed(0)
 model = torch.jit.script(SCMNet(1, 1, args.nodes, args.ins, args.outs))
-reservoir0 = torch.rand(6)
+reservoir0 = torch.rand(args.nodes)
 crit = nn.MSELoss()
 opti = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 data = generate_data(args.range[0], args.range[1], args.window * args.epochs)
 
 plt.figure(1)
-plt.title(f'SCM Model, {args.nodes} node reservoir, {args.ins} input channels, {args.outs} output channels')
+plt.title(f'SCM Model, {args.nodes} node reservoir, {args.ins} input channel{"" if args.ins == 1 else "s"}, {args.outs} output channel{"" if args.outs == 1 else "s"}')
 plt.ion()
 
 torch.autograd.set_detect_anomaly(True)
