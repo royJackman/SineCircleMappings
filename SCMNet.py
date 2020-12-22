@@ -82,6 +82,7 @@ plt.ion()
 
 torch.autograd.set_detect_anomaly(True)
 
+total_loss = 0.0
 for step in trange(args.epochs):
     start, end = step * args.window, (step + 1) * args.window
     x_np = data[0][start:end]
@@ -91,6 +92,7 @@ for step in trange(args.epochs):
 
     pred, reservoir0 = model(x, reservoir0.clone())
     loss = crit(pred.double(), y.flatten())
+    total_loss += loss.item()
     opti.zero_grad()
     loss.backward(retain_graph=True)
     opti.step()
@@ -102,7 +104,9 @@ for step in trange(args.epochs):
         plt.plot(steps, y_np.flatten(), 'r-', label='Target')
         plt.plot(steps, pred.data.numpy(), 'b-', label='Prediction')
     plt.draw(); plt.pause(0.05)
+    if step % 20 == 0:
+        print(total_loss/(step + 1))
 
 plt.ioff()
 plt.show()
-print('Alphas:', model.alphas.detach().numpy(), '\nKs:', model.ks.detach().numpy(), '\nOmegas:', model.omegas.detach().numpy(), '\nReservoir:', reservoir0.detach().numpy())
+print('Alphas:', model.alphas.detach().numpy(), '\nKs:', model.ks.detach().numpy(), '\nOmegas:', model.omegas.detach().numpy(), '\nReservoir:', reservoir0.detach().numpy(), f'\nAvg Loss: {total_loss/args.epochs}')
