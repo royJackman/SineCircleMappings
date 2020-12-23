@@ -21,7 +21,7 @@ parser.add_argument('-r', '--range', nargs='+', type=int, dest='range', default=
 parser.add_argument('-w', '--window', type=int, dest='window', default=1, help='Window width')
 args = parser.parse_args()
 
-device = torch.device('cpu')
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 torch.pi = torch.acos(torch.zeros(1)).item() * 2
 
@@ -70,8 +70,8 @@ class SCMNet(nn.Module):
         return torch.sum(thetas.clone()[0, :, self.outputs], 1), thetas.clone()
 
 torch.manual_seed(0)
-model = torch.jit.script(SCMNet(1, 1, args.nodes, args.ins, args.outs))
-reservoir0 = torch.rand(args.nodes)
+model = torch.jit.script(SCMNet(1, 1, args.nodes, args.ins, args.outs)).to(device)
+reservoir0 = torch.rand(args.nodes).to(device)
 crit = nn.MSELoss()
 opti = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 data = generate_data(args.range[0], args.range[1], args.window * args.epochs)
@@ -87,8 +87,8 @@ for step in trange(args.epochs):
     start, end = step * args.window, (step + 1) * args.window
     x_np = data[0][start:end]
     y_np = data[1][start:end]
-    x = torch.from_numpy(x_np[np.newaxis, :, np.newaxis]).float()
-    y = torch.from_numpy(y_np[np.newaxis, :, np.newaxis])
+    x = torch.from_numpy(x_np[np.newaxis, :, np.newaxis]).float().to(device)
+    y = torch.from_numpy(y_np[np.newaxis, :, np.newaxis]).to(device)
 
     pred, reservoir0 = model(x, reservoir0.clone())
     loss = crit(pred.double(), y.flatten())
@@ -104,7 +104,7 @@ for step in trange(args.epochs):
         plt.plot(steps, y_np.flatten(), 'r-', label='Target')
         plt.plot(steps, pred.data.numpy(), 'b-', label='Prediction')
     plt.draw(); plt.pause(0.05)
-    if step % 20 == 0:
+    if step % 50 == 0:
         print(total_loss/(step + 1))
 
 plt.ioff()
