@@ -104,9 +104,11 @@ for step in trange(args.epochs):
         plt.plot(steps, y_np.flatten(), 'r-', label='Target')
         plt.plot(steps, pred.data.numpy(), 'b-', label='Prediction')
     plt.draw(); plt.pause(0.05)
-    if step % 50 == 0:
-        print(total_loss/(step + 1))
 
 plt.ioff()
 plt.show()
-print('Alphas:', model.alphas.detach().numpy(), '\nKs:', model.ks.detach().numpy(), '\nOmegas:', model.omegas.detach().numpy(), '\nReservoir:', reservoir0.detach().numpy(), f'\nAvg Loss: {total_loss/args.epochs}')
+print('Alphas:   ', model.alphas.detach().numpy(), 
+      '\nKs:       ', model.ks.detach().numpy(), 
+      '\nOmegas:   ', model.omegas.detach().numpy(), 
+      '\nReservoir:', reservoir0.detach().flatten().numpy(), 
+      f'\nAvg Loss:  {total_loss/args.epochs}')
