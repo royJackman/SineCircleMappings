@@ -10,7 +10,7 @@ from sympy.parsing.sympy_parser import (parse_expr, standard_transformations, im
 from tqdm import trange
 
 parser = argparse.ArgumentParser('Continuously train SCMs on functions')
-parser.add_argument('-e', '--epochs', type=int, dest='epochs', default=1000, help='Number of epochs')
+parser.add_argument('-e', '--epochs', type=int, dest='epochs', default=250, help='Number of epochs')
 parser.add_argument('-f', '--function', type=str, dest='func', default='sine', help='Type of function to learn')
 parser.add_argument('-i', '--input_spread', type=int, dest='ins', default=2, help='Number of input channels')
 parser.add_argument('-l', '--hidden_layers', type=int, dest='hidden_dim', default=12, help='Number of hidden recurrent nodes')
@@ -103,7 +103,7 @@ for step in trange(args.epochs):
     else:
         plt.plot(steps, y_np.flatten(), 'r-', label='Target')
         plt.plot(steps, pred.data.numpy(), 'b-', label='Prediction')
-    plt.draw(); plt.pause(0.05)
+    plt.draw(); plt.pause(0.02)
 
 plt.ioff()
 plt.show()
