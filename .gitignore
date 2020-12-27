@@ -143,3 +143,5 @@ dmypy.json
 *.json
 checkpoint
 *.pb
+*.png
+*.wav
