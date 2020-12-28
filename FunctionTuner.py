@@ -60,6 +60,7 @@ for step in trange(args.epochs):
     opti.zero_grad()
     loss.backward(retain_graph=True)
     opti.step()
+    
     steps = [*range(start, end)]
     if len(steps) == 1:
         plt.plot(steps[0], y.item(), 'ro', label='Target')
@@ -67,10 +68,12 @@ for step in trange(args.epochs):
     else:
         plt.plot(steps, y_np.flatten(), 'r-', label='Target')
         plt.plot(steps, pred.data.numpy(), 'b-', label='Prediction')
+
     plt.draw(); plt.pause(0.02)
 
 plt.ioff()
 plt.show()
+
 print('Alphas:   ', model.alphas.detach().numpy(), 
       '\nKs:       ', model.ks.detach().numpy(), 
       '\nOmegas:   ', model.omegas.detach().numpy(), 
