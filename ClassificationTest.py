@@ -5,11 +5,13 @@ import matplotlib.pyplot as plt
 from SCMNet import SCMNet
 from tqdm import trange
 
+print(f'CUDA: {torch.cuda.is_available()}')
+
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 torch.manual_seed(0)
-model = torch.jit.script(SCMNet(8, 1, 12, 12, 6))
-reservoir0 = torch.rand(12).to(device)
+model = torch.jit.script(SCMNet(8, 1, 8, 8, 8))
+reservoir0 = torch.rand(8).to(device)
 crit = nn.MSELoss()
 opti = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
