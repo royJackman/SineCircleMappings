@@ -18,7 +18,7 @@ opti = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 data = list(csv.reader(open('Data/abalone.data', 'r')))
 transformed = []
 
-gender_cat = {'M': 1.0, 'F': 2.0, 'I': 0.0}
+gender_cat = {'I': 0.0, 'M': 1.0, 'F': 2.0}
 
 def transform(item):
     return [gender_cat[item[0]], float(item[1]), float(item[2]), float(item[3]), float(item[4]), float(item[5]), float(item[6]), float(item[7]), float(item[8])]
