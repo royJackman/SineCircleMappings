@@ -30,8 +30,7 @@ data = torch.tensor(transformed)
 data = data/data.max(0, keepdim=True)[0]
 inputs = data[:, :-1]
 outputs = data[:, -1:]
-split = int(data.size()[0] * 0.8)
-# split = 1000
+split = int(data.size()[0] * 0.6)
 
 train_x = inputs[:split, :].to(device)
 train_y = outputs[:split, :].to(device)
