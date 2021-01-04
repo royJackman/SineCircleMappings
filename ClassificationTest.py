@@ -48,7 +48,7 @@ for i in range(3):
         loss = crit(pred.double(), train_y[j, :].flatten().double())
         # plt.plot(int(i*split+j), pred.item(), 'ro')
         # plt.plot(int(i*split+j), train_y[j, :].flatten()[0], 'go')
-        plt.show(); plt.pause(0.03)
+        # plt.show(); plt.pause(0.03)
         epoch_loss += loss.item()
         opti.zero_grad()
         loss.backward(retain_graph=True)
