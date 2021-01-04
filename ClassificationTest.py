@@ -41,7 +41,7 @@ test_y = outputs[split:, :].to(device)
 # plt.ion()
 
 total_loss = 0.0
-for i in range(3):
+for i in range(10):
     epoch_loss = 0.0
     for j in trange(split):
         pred, reservoir0 = model(train_x[j, :], reservoir0)
