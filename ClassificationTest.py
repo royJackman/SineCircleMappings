@@ -30,8 +30,7 @@ data = torch.tensor(transformed)
 data = data/data.max(0, keepdim=True)[0]
 inputs = data[:, :-1]
 outputs = data[:, -1:]
-split = int(data.size()[0] * 0.8)
-# split = 1000
+split = int(data.size()[0] * 0.6)
 
 train_x = inputs[:split, :].to(device)
 train_y = outputs[:split, :].to(device)
@@ -42,14 +41,14 @@ test_y = outputs[split:, :].to(device)
 # plt.ion()
 
 total_loss = 0.0
-for i in range(3):
+for i in range(10):
     epoch_loss = 0.0
     for j in trange(split):
         pred, reservoir0 = model(train_x[j, :], reservoir0)
         loss = crit(pred.double(), train_y[j, :].flatten().double())
         # plt.plot(int(i*split+j), pred.item(), 'ro')
         # plt.plot(int(i*split+j), train_y[j, :].flatten()[0], 'go')
-        plt.show(); plt.pause(0.03)
+        # plt.show(); plt.pause(0.03)
         epoch_loss += loss.item()
         opti.zero_grad()
         loss.backward(retain_graph=True)
