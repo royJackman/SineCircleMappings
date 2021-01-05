@@ -16,7 +16,7 @@ parser.add_argument('-n', '--nodes', type=int, dest='nodes', default=6, help='Nu
 parser.add_argument('-o', '--output_spread', type=int, dest='outs', default=4, help='Number of output channels')
 parser.add_argument('-p', '--parse_function', type=str, dest='func_string', default=None, help='Custom function to learn, will override built-in functions')
 parser.add_argument('-r', '--range', nargs='+', type=int, dest='range', default=[0, 100], help='Range of data to generate')
-parser.add_argument('-w', '--window', type=int, dest='window', default=1, help='Window width')
+parser.add_argument('-w', '--window', type=int, dest='window', default=50, help='Window length into the past')
 args = parser.parse_args()
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -41,14 +41,15 @@ model = torch.jit.script(SCMNet(2, 2, args.nodes, args.ins, args.outs)).to(devic
 reservoir0 = torch.rand(args.nodes).to(device)
 crit = nn.MSELoss()
 opti = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-# data = generate_data(args.range[0], args.range[1], args.window * args.epochs)
 
-# fig = plt.figure(1)
-fig, ax = plt.subplots()
-# fig.add_axes([-2, -2, 2, 2])
-plt.xlim(-2, 2)
-plt.ylim(-2, 2)
-plt.title(f'SCM Model, {args.nodes} node reservoir, {args.ins} input channel{"" if args.ins == 1 else "s"}, {args.outs} output channel{"" if args.outs == 1 else "s"}')
+fig, axs = plt.subplots(1, 2)
+axs[0].set_xlim(-2, 2)
+axs[0].set_ylim(-2, 2)
+axs[0].set_title('Prediction')
+axs[1].set_xlim(-2, 2)
+axs[1].set_ylim(-2, 2)
+axs[1].set_title('Actual')
+plt.suptitle(f'SCM Model, {args.nodes} node reservoir, {args.ins} input channel{"" if args.ins == 1 else "s"}, {args.outs} output channel{"" if args.outs == 1 else "s"}')
 plt.ion()
 
 torch.autograd.set_detect_anomaly(True)
@@ -56,14 +57,11 @@ torch.autograd.set_detect_anomaly(True)
 x = torch.tensor([0.0, 0.0])
 y = tensorHenonMap(x)
 
+prediction_past = []
+actual_past = []
+
 total_loss = 0.0
 for step in trange(args.epochs):
-    # start, end = step * args.window, (step + 1) * args.window
-    # x_np = data[0][start:end]
-    # y_np = data[1][start:end]
-    # x = torch.from_numpy(x_np[np.newaxis, :, np.newaxis]).float().to(device)
-    # y = torch.from_numpy(y_np[np.newaxis, :, np.newaxis]).to(device)
-
     pred, reservoir0 = model(x, reservoir0.clone())
     loss = crit(pred.double(), y.flatten())
     total_loss += loss.item()
@@ -72,21 +70,17 @@ for step in trange(args.epochs):
     opti.step()
 
     plotpred = pred.detach().numpy()
-    plt.plot(plotpred[0], plotpred[1], 'bo')
-    plt.plot(y[0], y[1], 'ro')
-    # fig.set_xlim(-2, 2)
-    # fig.set_ylim(-2, 2)
+    prediction_past.append(axs[0].plot(plotpred[0], plotpred[1], 'bo'))
+    actual_past.append(axs[1].plot(y[0], y[1], 'ro'))
+
+    if len(prediction_past) > args.window or len(actual_past) > args.window:
+        prediction_past[0][0].remove()
+        prediction_past = prediction_past[1:]
+        actual_past[0][0].remove()
+        actual_past = actual_past[1:]
 
     x = y
     y = tensorHenonMap(x)
-    
-    # steps = [*range(start, end)]
-    # if len(steps) == 1:
-    #     plt.plot(steps[0], y.item(), 'ro', label='Target')
-    #     plt.plot(steps[0], pred.item(), 'bo', label='Prediction')
-    # else:
-    #     plt.plot(steps, y_np.flatten(), 'r-', label='Target')
-    #     plt.plot(steps, pred.data.numpy(), 'b-', label='Prediction')
 
     plt.draw(); plt.pause(0.02)
 
