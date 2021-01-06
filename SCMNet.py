@@ -30,7 +30,7 @@ class SCMNet(nn.Module):
         for i, v in enumerate(self.inputs):
             self.driver[i, v] = 1.0
         
-        self.mask = torch.zeros(self.reservoir_size, self.output_size)
+        self.mask = torch.zeros(self.reservoir_size, self.output_size).double()
         for o, v in enumerate(self.outputs):
             self.mask[v, o] = 1.0
 
@@ -40,10 +40,10 @@ class SCMNet(nn.Module):
         self.reservoir = torch.from_numpy(nx.to_numpy_array(nx.generators.random_graphs.watts_strogatz_graph(reservoir_size, 4, 0.5))).float()
     
     def forward(self, x, reservoir_state):
-        driven_state = reservoir_state + torch.matmul(x, self.driver)
+        driven_state = reservoir_state + torch.matmul(x.double(), self.driver.double())
         dsmax = driven_state.max()
         dsmin = driven_state.min()
         driven_state = torch.div(torch.sub(driven_state.clone(), torch.ones(self.reservoir_size), alpha=dsmin.item()), dsmax.item() - dsmin.item())
-        thetas = torch.matmul(driven_state, self.reservoir)
+        thetas = torch.matmul(driven_state.double(), self.reservoir.double())
         thetas = tensor_scm(thetas.clone(), self.alphas, self.ks, self.omegas)
         return torch.matmul(thetas.clone(), self.mask), thetas.clone()
