@@ -94,6 +94,10 @@ for step in trange(999):
     x = y
     y = torch.tensor(states[step + 2])
 
+    axs[0].set_xlim(*axs[1].get_xlim())
+    axs[0].set_ylim(*axs[1].get_ylim())
+    axs[0].set_zlim(*axs[1].get_zlim())
+
     plt.draw(); plt.pause(0.02)
 
 plt.ioff()
