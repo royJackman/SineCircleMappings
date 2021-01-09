@@ -19,11 +19,100 @@ parser.add_argument('-r', '--range', nargs='+', type=int, dest='range', default=
 parser.add_argument('-w', '--window', type=int, dest='window', default=50, help='Window length into the past')
 args = parser.parse_args()
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+def generate_data(start, end, points):
+    full = np.linspace(start, end, points+1)
+    if args.func_string is None:
+        if args.func == 'sine':
+            full = np.sin(full)
+    else:
+        exp = parse_expr(args.func_string, transformations=(standard_transformations + (implicit_multiplication_application,)))
+        full = np.asarray([exp.evalf(subs={'x': i}) for i in full]).astype('float')
+    return full[:-1], full[1:]
 
+class testRNN(nn.Module):
+    def __init__(self, input_size, output_size, hidden_dim, n_layers):
+        super(testRNN, self).__init__()
+        self.hidden_dim = hidden_dim
+        self.n_layers = n_layers
+        
+        self.rnn = nn.RNN(input_size, hidden_dim, n_layers, batch_first=True)
+        self.linear = nn.Linear(hidden_dim, output_size)
+    
+    def forward(self, x, hidden):
+        x, hidden = self.rnn(x, hidden)
+        return self.linear(x), hidden
+
+    def init_hidden(self, batch_size):
+        hidden = torch.zeros(self.n_layers, batch_size, self.hidden_dim).to(device)
+        return hidden
+
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 torch.manual_seed(0)
+
 SCM = torch.jit.script(SCMNet(1, 1, args.nodes, args.ins, args.outs)).to(device)
-RNN = nn.RNN(1, args.nodes, 1, batch_first=True).to(device)
+RNN = testRNN(1, 1, args.nodes, 1)
 
 print('Number of parameters for SCM:', sum([len(p.flatten()) for p in SCM.parameters()]))
 print('Number of parameters for RNN:', sum([len(p.flatten()) for p in RNN.parameters()]))
+
+reservoir = torch.rand(args.nodes).to(device)
+hidden = torch.zeros(1, 1, args.nodes).to(device)
+
+SCMcrit = nn.MSELoss()
+RNNcrit = nn.MSELoss()
+
+SCMopti = torch.optim.SGD(SCM.parameters(), lr = 0.01, momentum=0.9)
+RNNopti = torch.optim.SGD(RNN.parameters(), lr = 0.01, momentum=0.9)
+
+plt.figure(1)
+plt.get_current_fig_manager().window.state('zoomed')
+plt.ion()
+
+combined_axis = plt.subplot(212)
+actual_axis = plt.subplot(231)
+SCM_axis = plt.subplot(232)
+RNN_axis = plt.subplot(233)
+
+actual_axis.set_title('Actual')
+SCM_axis.set_title('SCM')
+RNN_axis.set_title('RNN')
+
+lindata = generate_data(args.range[0], args.range[1], args.epochs)
+
+torch.autograd.set_detect_anomaly(True)
+for step in trange(args.epochs):
+    x = torch.from_numpy(lindata[0][int(step):int(step)+1][np.newaxis, :, np.newaxis]).float().to(device)
+    y = torch.from_numpy(lindata[1][int(step):int(step)+1][np.newaxis, :, np.newaxis]).to(device)
+
+    SCMpred, reservoir = SCM(x, reservoir.clone())
+    RNNpred, hidden = RNN(x, hidden.clone())
+
+    SCMloss = SCMcrit(SCMpred.clone().double(), y)
+    RNNloss = RNNcrit(RNNpred.clone().double(), y)
+
+    SCMopti.zero_grad()
+    RNNopti.zero_grad()
+
+    SCMloss.backward(retain_graph=True)
+    RNNloss.backward(retain_graph=True)
+
+    SCMopti.step()
+    RNNopti.step()
+
+    combined_axis.plot(int(step)+1, y.item(), 'ro')
+    actual_axis.plot(int(step)+1, y.item(), 'ro')
+
+    combined_axis.plot(int(step)+1, SCMpred.item(), 'go')
+    SCM_axis.plot(int(step)+1, SCMpred.item(), 'go')
+    
+    combined_axis.plot(int(step)+1, RNNpred.item(), 'bo')
+    RNN_axis.plot(int(step)+1, RNNpred.item(), 'bo')
+
+    plt.draw(); plt.pause(0.02)
+
+    del SCMpred
+    del RNNpred
+
+plt.ioff()
+plt.show()
+print(SCMloss, RNNloss)
