@@ -145,3 +145,5 @@ checkpoint
 *.pb
 *.png
 *.wav
+.vs
+SCMenv
