@@ -40,7 +40,7 @@ class testRNN(nn.Module):
     
     def forward(self, x, hidden):
         x, hidden = self.rnn(x, hidden)
-        return self.linear(x), hidden
+        return torch.mean(x), hidden
 
     def init_hidden(self, batch_size):
         hidden = torch.zeros(self.n_layers, batch_size, self.hidden_dim).to(device)
@@ -56,13 +56,13 @@ print('Number of parameters for SCM:', sum([len(p.flatten()) for p in SCM.parame
 print('Number of parameters for RNN:', sum([len(p.flatten()) for p in RNN.parameters()]))
 
 reservoir = torch.rand(args.nodes).to(device)
-hidden = torch.zeros(1, 1, args.nodes).to(device)
+hidden = None
 
 SCMcrit = nn.MSELoss()
 RNNcrit = nn.MSELoss()
 
 SCMopti = torch.optim.SGD(SCM.parameters(), lr = 0.01, momentum=0.9)
-RNNopti = torch.optim.SGD(RNN.parameters(), lr = 0.01, momentum=0.9)
+RNNopti = torch.optim.Adam(RNN.parameters(), lr = 0.01)
 
 plt.figure(1)
 plt.get_current_fig_manager().window.state('zoomed')
@@ -85,10 +85,11 @@ for step in trange(args.epochs):
     y = torch.from_numpy(lindata[1][int(step):int(step)+1][np.newaxis, :, np.newaxis]).to(device)
 
     SCMpred, reservoir = SCM(x, reservoir.clone())
-    RNNpred, hidden = RNN(x, hidden.clone())
+    RNNpred, hidden = RNN(x, hidden)
+    hidden = hidden.data
 
     SCMloss = SCMcrit(SCMpred.clone().double(), y)
-    RNNloss = RNNcrit(RNNpred.clone().double(), y)
+    RNNloss = RNNcrit(RNNpred.double().reshape(1,1,1), y)
 
     SCMopti.zero_grad()
     RNNopti.zero_grad()
@@ -108,6 +109,18 @@ for step in trange(args.epochs):
     combined_axis.plot(int(step)+1, RNNpred.item(), 'bo')
     RNN_axis.plot(int(step)+1, RNNpred.item(), 'bo')
 
+    combined_axis.set_xlim(int(step)-150, int(step)+1)
+    combined_axis.set_ylim(-2,2)
+    
+    actual_axis.set_xlim(int(step)-50, int(step)+1)
+    actual_axis.set_ylim(-2,2)
+    
+    SCM_axis.set_xlim(int(step)-50, int(step)+1)
+    SCM_axis.set_ylim(-2,2)
+    
+    RNN_axis.set_xlim(int(step)-50, int(step)+1)
+    RNN_axis.set_ylim(-2,2)
+
     plt.draw(); plt.pause(0.02)
 
     del SCMpred
@@ -115,4 +128,3 @@ for step in trange(args.epochs):
 
 plt.ioff()
 plt.show()
-print(SCMloss, RNNloss)
