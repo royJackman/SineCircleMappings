@@ -105,9 +105,11 @@ for step in trange(args.epochs):
 
     combined_axis.plot(int(step)+1, SCMpred.item(), 'go')
     SCM_axis.plot(int(step)+1, SCMpred.item(), 'go')
+    SCM_axis.set_title(f'SCM Loss: {round(SCMloss.item(), 6)}')
     
     combined_axis.plot(int(step)+1, RNNpred.item(), 'bo')
     RNN_axis.plot(int(step)+1, RNNpred.item(), 'bo')
+    RNN_axis.set_title(f'RNN Loss: {round(RNNloss.item(), 6)}')
 
     combined_axis.set_xlim(int(step)-150, int(step)+1)
     combined_axis.set_ylim(-2,2)
@@ -128,3 +130,5 @@ for step in trange(args.epochs):
 
 plt.ioff()
 plt.show()
+
+print(f'SCM Loss: {SCMloss}\nRNN loss: {RNNloss}')
