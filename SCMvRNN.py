@@ -16,7 +16,7 @@ parser.add_argument('-n', '--nodes', type=int, dest='nodes', default=6, help='Nu
 parser.add_argument('-o', '--output_spread', type=int, dest='outs', default=4, help='Number of output channels')
 parser.add_argument('-p', '--parse_function', type=str, dest='func_string', default=None, help='Custom function to learn, will override built-in functions')
 parser.add_argument('-r', '--range', nargs='+', type=int, dest='range', default=[0, 100], help='Range of data to generate')
-parser.add_argument('-w', '--window', type=int, dest='window', default=50, help='Window length into the past')
+# parser.add_argument('-w', '--window', type=int, dest='window', default=50, help='Window length into the past')
 args = parser.parse_args()
 
 def generate_data(start, end, points):
