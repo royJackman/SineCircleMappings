@@ -46,9 +46,9 @@ class MultilayerSCMNet(nn.Module):
         self.states = []
 
         for r in reservoir_sizes:
-            self.alphas.append(nn.Parameter(torch.rand(r)))
-            self.ks.append(nn.Parameter(torch.rand(r)))
-            self.omegas.append(nn.Parameter(torch.rand(r)))
+            self.alphas.append(nn.Parameter(torch.rand(r), requires_grad=True))
+            self.ks.append(nn.Parameter(torch.rand(r), requires_grad=True))
+            self.omegas.append(nn.Parameter(torch.rand(r), requires_grad=True))
             self.reservoirs.append(torch.from_numpy(nx.to_numpy_array(nx.generators.watts_strogatz_graph(r, 4, 0.5))))
             self.states.append(torch.rand(r))
 
