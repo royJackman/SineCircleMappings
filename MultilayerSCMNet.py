@@ -29,15 +29,15 @@ class MultilayerSCMNet(nn.Module):
 
         self.driver = torch.zeros(self.input_size, self.reservoir_sizes[0])
         for i, v in enumerate(self.inputs):
-            self.driver[i, v] = 1.0
+            self.driver[i, v] = 1.0/self.input_spread
 
         self.transitions = [self.driver]
         for i, r in enumerate(reservoir_sizes[1:]):
-            self.transitions.append(torch.ones(reservoir_sizes[i], r))
+            self.transitions.append(torch.mul(torch.ones(reservoir_sizes[i], r), 1.0/r))
         
         self.mask = torch.zeros(self.reservoir_sizes[-1], self.output_size).double()
         for o, v in enumerate(self.outputs):
-            self.mask[v, o] = 1.0
+            self.mask[v, o] = 1.0/output_spread
         
         self.alphas = nn.ParameterList([])
         self.ks = nn.ParameterList([])
@@ -60,5 +60,5 @@ class MultilayerSCMNet(nn.Module):
             mn = x.min()
             x = torch.div(torch.sub(x.clone(), torch.ones(self.reservoir_sizes[i]), alpha=mn.item()), mx.item() - mn.item())
             x = torch.matmul(x.clone().double(), r.double())
-            self.states[i] = x.clone()
+            self.states[i] = x.data
         return torch.matmul(x, self.mask)
