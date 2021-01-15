@@ -54,11 +54,10 @@ class MultilayerSCMNet(nn.Module):
 
     def forward(self, x):
         for i, r in enumerate(self.reservoirs):
-            x = torch.matmul(x.clone().double(), self.transitions[i].double())
-            x = torch.add(x.clone(), self.states[i])
-            mx = x.max()
-            mn = x.min()
-            x = torch.div(torch.sub(x.clone(), torch.ones(self.reservoir_sizes[i]), alpha=mn.item()), mx.item() - mn.item())
-            x = torch.matmul(x.clone().double(), r.double())
-            self.states[i] = x.data
+            driven_state = self.states[i] + torch.matmul(x.double(), self.transitions[i].double())
+            dsmax = driven_state.max()
+            dsmin = driven_state.min()
+            driven_state = torch.div(torch.sub(driven_state.clone(), torch.ones(len(r)), alpha=dsmin.item()), dsmax.item() - dsmin.item())
+            thetas = torch.matmul(driven_state.double(), r.double())
+            x = tensor_scm(thetas, self.alphas[i], self.ks[i], self.omegas[i])
         return torch.matmul(x, self.mask)
