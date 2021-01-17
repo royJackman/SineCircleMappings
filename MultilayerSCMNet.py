@@ -11,7 +11,7 @@ torch.pi = torch.acos(torch.zeros(1)).item() * 2
 def tensor_scm(thetas, alphas, ks, omegas): return torch.mul(alphas.clone(), thetas.clone()) + omegas.clone() + torch.mul(torch.mul(ks.clone(), (1.0/(2.0 * torch.pi))), torch.sin(torch.mul(2.0 * torch.pi, thetas.clone())))
 
 class MultilayerSCMNet(nn.Module):
-    def __init__(self, input_size, output_size, reservoir_sizes, input_spread, output_spread):
+    def __init__(self, input_size, output_size, reservoir_sizes, input_spread=1, output_spread=1):
         super(MultilayerSCMNet, self).__init__()
         self.input_size = input_size
         self.output_size = output_size

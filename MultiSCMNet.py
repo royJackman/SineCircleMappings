@@ -33,7 +33,7 @@ class SCMLayer(nn.Module):
         return thetas
 
 class MultiSCMNet(nn.Module):
-    def __init__(self, input_size, output_size, reservoir_sizes, input_spread, output_spread):
+    def __init__(self, input_size, output_size, reservoir_sizes, input_spread=1, output_spread=1):
         super(MultiSCMNet, self).__init__()
         self.input_size = input_size
         self.output_size = output_size
