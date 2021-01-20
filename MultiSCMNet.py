@@ -55,9 +55,11 @@ class MultiSCMNet(nn.Module):
         for i, v in enumerate(self.inputs):
             self.driver[i, v] = 1.0
         
-        self.mask = torch.zeros(self.reservoir_sizes[-1], self.output_size).double()
-        for o, v in enumerate(self.outputs):
-            self.mask[v, o] = 1.0
+        # self.mask = torch.zeros(self.reservoir_sizes[-1], self.output_size).double()
+        # for o, v in enumerate(self.outputs):
+        #     self.mask[v, o] = 1.0
+
+        self.linear = nn.Linear(self.reservoir_sizes[-1], self.output_size)
 
         self.layers.append(SCMLayer(self.reservoir_sizes[0], 1, self.driver))
         self.states.append(torch.rand(self.reservoir_sizes[0]))
@@ -70,4 +72,5 @@ class MultiSCMNet(nn.Module):
         for i, l in enumerate(self.layers):
             x = l(x, self.states[i])
             self.states[i] = x.clone()
-        return torch.matmul(x, self.mask)
+        # return torch.matmul(x, self.mask)
+        return self.linear(x.float())
