@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from sympy.parsing.sympy_parser import (parse_expr, standard_transformations, implicit_multiplication_application)
 from tqdm import trange
 from SCMNet import SCMNet
+from MultilayerSCMNet import MultilayerSCMNet
+from MultiSCMNet import MultiSCMNet
 
 parser = argparse.ArgumentParser('Compare an SCM to an RNN of equal volume')
 parser.add_argument('-e', '--epochs', type=int, dest='epochs', default=250, help='Number of epochs')
@@ -49,7 +51,9 @@ class testRNN(nn.Module):
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 torch.manual_seed(0)
 
-SCM = torch.jit.script(SCMNet(1, 1, args.nodes, args.ins, args.outs)).to(device)
+# SCM = torch.jit.script(SCMNet(1, 1, args.nodes, args.ins, args.outs)).to(device)
+# SCM = torch.jit.script(MultilayerSCMNet(1, 1, [4, 5], 4, 4))
+SCM = torch.jit.script(MultiSCMNet(1, 1, [4, 4], 4, 4))
 RNN = testRNN(1, 1, args.nodes, 1)
 
 print('Number of parameters for SCM:', sum([len(p.flatten()) for p in SCM.parameters()]))
@@ -83,12 +87,11 @@ torch.autograd.set_detect_anomaly(True)
 for step in trange(args.epochs):
     x = torch.from_numpy(lindata[0][int(step):int(step)+1][np.newaxis, :, np.newaxis]).float().to(device)
     y = torch.from_numpy(lindata[1][int(step):int(step)+1][np.newaxis, :, np.newaxis]).to(device)
-
-    SCMpred, reservoir = SCM(x, reservoir.clone())
+    SCMpred = SCM(x)
     RNNpred, hidden = RNN(x, hidden)
     hidden = hidden.data
 
-    SCMloss = SCMcrit(SCMpred.clone().double(), y)
+    SCMloss = SCMcrit(SCMpred.double(), y)
     RNNloss = RNNcrit(RNNpred.double().reshape(1,1,1), y)
 
     SCMopti.zero_grad()
