@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from sympy.parsing.sympy_parser import (parse_expr, standard_transformations, implicit_multiplication_application)
 from tqdm import trange
 from SCMNet import SCMNet
+from MultiSCMNet import MultiSCMNet
 
 parser = argparse.ArgumentParser('Continuously train SCMs on functions')
 parser.add_argument('-e', '--epochs', type=int, dest='epochs', default=250, help='Number of epochs')
@@ -37,10 +38,12 @@ def generate_data(start, end, points):
     return full[:-1], full[1:]
 
 torch.manual_seed(0)
-model = torch.jit.script(SCMNet(2, 2, args.nodes, args.ins, args.outs)).to(device)
-reservoir0 = torch.rand(args.nodes).to(device)
+# model = torch.jit.script(SCMNet(2, 2, args.nodes, args.ins, args.outs)).to(device)
+model = torch.jit.script(MultiSCMNet(2, 2, [6, 6]))
+reservoir0 = torch.rand(2, 6).to(device)
 crit = nn.MSELoss()
-opti = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+opti = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
+# opti = torch.optim.Adam(model.parameters(), lr=0.1)
 
 fig, axs = plt.subplots(1, 2)
 axs[0].set_xlim(-2, 2)
@@ -62,7 +65,8 @@ actual_past = []
 
 total_loss = 0.0
 for step in trange(args.epochs):
-    pred, reservoir0 = model(x, reservoir0.clone())
+    # pred, reservoir0 = model(x.clone(), reservoir0.clone())
+    pred = model(x)
     loss = crit(pred.double(), y.flatten())
     total_loss += loss.item()
     opti.zero_grad()
