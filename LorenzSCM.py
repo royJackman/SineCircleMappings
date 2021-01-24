@@ -50,7 +50,9 @@ def generate_data(start, end, points):
     return full[:-1], full[1:]
 
 torch.manual_seed(0)
-model = torch.jit.script(SCMNet(3, 3, args.nodes, args.ins, args.outs)).to(device)
+# model = torch.jit.script(SCMNet(3, 3, args.nodes, args.ins, args.outs)).to(device)
+from MultiSCMNet import MultiSCMNet
+model = torch.jit.script(MultiSCMNet(3, 3, [6, 6])).to(device)
 reservoir0 = torch.rand(args.nodes).to(device)
 crit = nn.MSELoss()
 opti = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
@@ -74,7 +76,8 @@ actual_past = []
 
 total_loss = 0.0
 for step in trange(999):
-    pred, reservoir0 = model(x.double(), reservoir0.clone())
+    # pred, reservoir0 = model(x.double(), reservoir0.clone())
+    pred = model(x)
     loss = crit(pred.double(), y.flatten())
     total_loss += loss.item()
     opti.zero_grad()
