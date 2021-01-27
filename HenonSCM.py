@@ -42,7 +42,7 @@ torch.manual_seed(0)
 model = torch.jit.script(MultiSCMNet(2, 2, [6, 6]))
 reservoir0 = torch.rand(2, 6).to(device)
 crit = nn.MSELoss()
-opti = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
+opti = torch.optim.SGD(model.parameters(), lr=0.03, momentum=0.9)
 # opti = torch.optim.Adam(model.parameters(), lr=0.1)
 
 fig, axs = plt.subplots(1, 2)
