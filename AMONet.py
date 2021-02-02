@@ -14,11 +14,12 @@ data = torch.tensor(data[['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'
 # sys.exit()
 # data = data/data.max(0, keepdim=True)[0]
 
-torch.manual_seed(10)
-model = torch.jit.script(msn.MultiSCMNet(1, 1, [6, 6, 6, 6]))
+torch.manual_seed(1)
+model = torch.jit.script(msn.MultiSCMNet(1, 1, [8, 8, 8]))
 crit = torch.nn.MSELoss()
 opti = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 roll = []
+actual_roll = []
 
 fig, axs = plt.subplots(1, 1)
 plt.ion()
@@ -33,6 +34,7 @@ for repetition in range(1):
     for step in trange(data.shape[0] - 1):
         pred = model(x)
         roll.append(pred.item())
+        actual_roll.append(y.item())
         loss = crit(pred.double(), y)
         total_loss += loss.item()
         opti.zero_grad()
@@ -41,12 +43,14 @@ for repetition in range(1):
 
         plotpred = pred.detach().numpy()
 
-        axs.plot(int(step), plotpred[0], 'b+')
-        axs.plot(int(step), y[0], 'bo')
+        axs.plot(int(step), plotpred[0], 'ro')
+        axs.plot(int(step), y[0], 'go')
 
         if len(roll) > 12:
             roll = roll[1:]
-        axs.plot(int(step), mean(roll), 'bx')
+            actual_roll = actual_roll[1:]
+        axs.plot(int(step), mean(roll), 'rx')
+        axs.plot(int(step), mean(actual_roll), 'gx')
 
         axs.set_xlim(max(0, int(step) - 100), int(step))
 
