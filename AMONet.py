@@ -10,9 +10,6 @@ from statistics import mean
 
 data = pd.read_csv('Data/amo_monthly.csv')
 data = torch.tensor(data[['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']].values).flatten()
-# print(data[:24])
-# sys.exit()
-# data = data/data.max(0, keepdim=True)[0]
 
 torch.manual_seed(1)
 model = torch.jit.script(msn.MultiSCMNet(1, 1, [8, 8, 8]))
