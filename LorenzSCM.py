@@ -52,7 +52,7 @@ def generate_data(start, end, points):
 torch.manual_seed(0)
 # model = torch.jit.script(SCMNet(3, 3, args.nodes, args.ins, args.outs)).to(device)
 from MultiSCMNet import MultiSCMNet
-model = torch.jit.script(MultiSCMNet(3, 3, [6, 6])).to(device)
+model = torch.jit.script(MultiSCMNet(3, 3, [10, 8, 6])).to(device)
 reservoir0 = torch.rand(args.nodes).to(device)
 crit = nn.MSELoss()
 opti = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
