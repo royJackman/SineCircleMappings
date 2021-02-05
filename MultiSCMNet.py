@@ -9,6 +9,13 @@ torch.pi = torch.acos(torch.zeros(1)).item() * 2
 
 def tensor_scm(thetas, alphas, ks, omegas): return torch.mul(alphas.clone(), thetas.clone()) + omegas.clone() + torch.mul(torch.mul(ks.clone(), (1.0/(2.0 * torch.pi))), torch.sin(torch.mul(2.0 * torch.pi, thetas.clone())))
 
+"""
+Single SCM Layer
+    A single SCM layer contains the initialized reservoir and 3 parameters 
+for each node: alpha, omega, and k. Data is driven into the reservoir with a 
+single pseudo-time update step and returned. Back propogation is performed on 
+the individual node parameters.
+"""
 class SCMLayer(nn.Module):
     def __init__(self, reservoir_size, prev_size, transition=None):
         super(SCMLayer, self).__init__()
@@ -31,6 +38,13 @@ class SCMLayer(nn.Module):
         thetas = torch.matmul(driven_state.double(), self.reservoir.double())
         thetas = tensor_scm(thetas.clone(), self.alphas, self.ks, self.omegas)
         return thetas
+    
+
+"""
+Multi SCM Network
+    A multi-SCM network consisting of layers of internal reservoirs and a
+single linear output layer. 
+"""
 
 class MultiSCMNet(nn.Module):
     def __init__(self, input_size, output_size, reservoir_sizes, input_spread=1, output_spread=1):
