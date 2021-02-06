@@ -7,6 +7,11 @@ torch.pi = torch.acos(torch.zeros(1)).item() * 2
 
 # def scm(theta, alpha=1.0, k=1.0, omega=0.16): return alpha * theta + omega + (k/(2 * np.pi)) * np.sin(2 * np.pi * theta)
 
+"""
+Tensorized SCM function
+    This is the tensor-friendly version of the above SCM update function. 
+"""
+
 def tensor_scm(thetas, alphas, ks, omegas): return torch.mul(alphas.clone(), thetas.clone()) + omegas.clone() + torch.mul(torch.mul(ks.clone(), (1.0/(2.0 * torch.pi))), torch.sin(torch.mul(2.0 * torch.pi, thetas.clone())))
 
 """
