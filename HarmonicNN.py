@@ -21,7 +21,7 @@ class HarmonicNN(nn.Module):
         updated = forget + linear + extsin
         if len(updated.shape) == 3:
             updated = updated[0]
-        return torch.mm(updated, torch.ones(self.input_size, self.output_size))
+        return torch.mm(updated.double(), torch.ones(self.input_size, self.output_size).double())
 
 class MultilayerHarmonicNN(nn.Module):
     def __init__(self, input_size, output_size, layers=None):
