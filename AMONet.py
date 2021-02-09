@@ -14,7 +14,8 @@ data = torch.tensor(data[['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'
 
 torch.manual_seed(1)
 # model = torch.jit.script(msn.MultiSCMNet(1, 1, [8, 8, 8]))
-model = torch.jit.script(hnn.MultilayerHarmonicNN(1, 1, [6, 6, 6]))
+model = torch.jit.script(hnn.MultilayerHarmonicNN(1, 1, [4]))
+print('Model params:', sum([len(p.flatten()) for p in model.parameters()]))
 crit = torch.nn.MSELoss()
 # opti = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 opti = torch.optim.Adam(model.parameters(), lr=0.01)
@@ -43,23 +44,26 @@ for repetition in range(1):
 
         plotpred = pred.detach().numpy()
 
-        axs.plot(int(step), plotpred[0], 'rx')
-        axs.plot(int(step), y[0], 'gx')
+        axs.plot(int(step), plotpred[0], 'rx', label='Prediction')
+        axs.plot(int(step), y[0], 'gx', label='Actual')
 
         if len(roll) > 12:
             roll = roll[1:]
             actual_roll = actual_roll[1:]
-        axs.plot(int(step), mean(roll), 'ro')
-        axs.plot(int(step), mean(actual_roll), 'go')
 
-        axs.set_xlim(max(0, int(step) - 100), int(step))
+        axs.plot(int(step), mean(roll), 'ro', label='Pred Rolling Avg')
+        axs.plot(int(step), mean(actual_roll), 'go', label='Actual Rolling Avg')
+
+        axs.set_xlim(max(-1, int(step) - 100), int(step))
+        axs.set_ylim(-0.5, 0.5)
 
         x = y
         y = data[int(step) + 1].reshape(1,1)
 
-        axs.set_ylim(-0.5, 0.5)
+        if int(step) == 0:
+            axs.legend(loc='lower left')
         
-        plt.draw(); plt.pause(0.01)
+        plt.draw(); plt.pause(0.001)
 
 plt.ioff()
 plt.show()
