@@ -9,13 +9,14 @@ from tqdm import trange
 from SCMNet import SCMNet
 from MultilayerSCMNet import MultilayerSCMNet
 from MultiSCMNet import MultiSCMNet
+from HarmonicNN import MultilayerHarmonicNN
 
 parser = argparse.ArgumentParser('Compare an SCM to an RNN of equal volume')
 parser.add_argument('-e', '--epochs', type=int, dest='epochs', default=250, help='Number of epochs')
 parser.add_argument('-f', '--function', type=str, dest='func', default='sine', help='Type of function to learn')
 parser.add_argument('-i', '--input_spread', type=int, dest='ins', default=2, help='Number of input channels')
-parser.add_argument('-l', '--layers', nargs='+', type=int, dest='layers', default=[10, 8], help='Reservoir layers')
-parser.add_argument('-n', '--nodes', type=int, dest='nodes', default=6, help='Number of hidden nodes in the RNN')
+parser.add_argument('-l', '--layers', nargs='+', type=int, dest='layers', default=None, help='Reservoir layers')
+parser.add_argument('-n', '--nodes', type=int, dest='nodes', default=8, help='Number of hidden nodes in the RNN')
 parser.add_argument('-o', '--output_spread', type=int, dest='outs', default=4, help='Number of output channels')
 parser.add_argument('-p', '--parse_function', type=str, dest='func_string', default=None, help='Custom function to learn, will override built-in functions')
 parser.add_argument('-r', '--range', nargs='+', type=int, dest='range', default=[0, 100], help='Range of data to generate')
@@ -53,7 +54,8 @@ torch.manual_seed(0)
 
 # SCM = torch.jit.script(SCMNet(1, 1, args.nodes, args.ins, args.outs)).to(device)
 # SCM = torch.jit.script(MultilayerSCMNet(1, 1, [4, 5], 4, 4))
-SCM = torch.jit.script(MultiSCMNet(1, 1, args.layers))
+# SCM = torch.jit.script(MultiSCMNet(1, 1, args.layers))
+SCM = torch.jit.script(MultilayerHarmonicNN(1, 1, args.layers))
 RNN = testRNN(1, 1, args.nodes, 1)
 
 print('Number of parameters for SCM:', sum([len(p.flatten()) for p in SCM.parameters()]))
@@ -65,7 +67,8 @@ hidden = None
 SCMcrit = nn.MSELoss()
 RNNcrit = nn.MSELoss()
 
-SCMopti = torch.optim.SGD(SCM.parameters(), lr = 0.01, momentum=0.9)
+# SCMopti = torch.optim.SGD(SCM.parameters(), lr = 0.01, momentum=0.9)
+SCMopti = torch.optim.Adam(SCM.parameters(), lr = 0.01)
 RNNopti = torch.optim.Adam(RNN.parameters(), lr = 0.01)
 
 plt.figure(1)
@@ -83,6 +86,9 @@ RNN_axis.set_title('RNN')
 
 lindata = generate_data(args.range[0], args.range[1], args.epochs)
 
+total_SCM = 0.0
+total_RNN = 0.0
+
 torch.autograd.set_detect_anomaly(True)
 for step in trange(args.epochs):
     x = torch.from_numpy(lindata[0][int(step):int(step)+1][np.newaxis, :, np.newaxis]).float().to(device)
@@ -93,6 +99,9 @@ for step in trange(args.epochs):
 
     SCMloss = SCMcrit(SCMpred.double(), y)
     RNNloss = RNNcrit(RNNpred.double().reshape(1,1,1), y)
+
+    total_SCM += abs(SCMloss.item())
+    total_RNN += abs(RNNloss.item())
 
     SCMopti.zero_grad()
     RNNopti.zero_grad()
@@ -125,6 +134,10 @@ for step in trange(args.epochs):
     
     RNN_axis.set_xlim(int(step)-50, int(step)+1)
     RNN_axis.set_ylim(-2,2)
+    
+    if (int(step) - 1) % 100 == 0:
+        print('Average error SCM:', total_SCM/int(step))
+        print('Average error RNN:', total_RNN/int(step))
 
     plt.draw(); plt.pause(0.02)
 

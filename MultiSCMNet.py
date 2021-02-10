@@ -43,7 +43,6 @@ class SCMLayer(nn.Module):
         thetas = torch.matmul(driven_state.double(), self.reservoir.double())
         thetas = tensor_scm(thetas.clone(), self.alphas, self.ks, self.omegas)
         return thetas
-    
 
 """
 Multi SCM Network
