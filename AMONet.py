@@ -23,19 +23,19 @@ args = parser.parse_args()
 torch.manual_seed(1)
 # model = torch.jit.script(msn.MultiSCMNet(1, 1, [8, 8, 8]))
 model = torch.jit.script(hnn.MultilayerHarmonicNN(1, 1, None))
-print('Model params:', sum([len(p.flatten()) for p in model.parameters()]))
+print('HNN params:', sum([len(p.flatten()) for p in model.parameters()]))
 crit = torch.nn.MSELoss()
 # opti = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 opti = torch.optim.Adam(model.parameters(), lr=0.01)
 
-benchmark = testRNN(1, 1, args.nodes, 1)
+RNN = testRNN(1, 1, args.nodes, 1)
 hidden = torch.zeros(1, 1, args.nodes)
-print('Benchmark params:', sum([len(p.flatten()) for p in benchmark.parameters()]))
-bench_crit = torch.nn.MSELoss()
-bench_opti = torch.optim.Adam(benchmark.parameters(), lr = 0.01)
+print('RNN params:', sum([len(p.flatten()) for p in RNN.parameters()]))
+RNN_crit = torch.nn.MSELoss()
+RNN_opti = torch.optim.Adam(RNN.parameters(), lr = 0.01)
 
 roll = []
-bench_roll = []
+RNN_roll = []
 actual_roll = []
 
 fig, axs = plt.subplots(1, 1)
@@ -44,49 +44,49 @@ plt.ion()
 torch.autograd.set_detect_anomaly(True)
 
 total_loss = 0.0
-bench_total = 0.0
+RNN_total = 0.0
 for repetition in range(1):
     plt.cla()
     x = data[0].reshape(1,1).float()
     y = data[1].reshape(1,1)
     for step in trange(data.shape[0] - 1):
         pred = model(x)
-        bench_pred, hidden = benchmark(x[np.newaxis, :].float(), hidden.float())
+        RNN_pred, hidden = RNN(x[np.newaxis, :].float(), hidden.float())
         hidden = hidden.data
 
         roll.append(pred.item())
-        bench_roll.append(bench_pred.item())
+        RNN_roll.append(RNN_pred.item())
         actual_roll.append(y.item())
 
         loss = crit(pred.double(), y)
-        bench_loss = bench_crit(bench_pred.double(), y.reshape([]))
+        RNN_loss = RNN_crit(RNN_pred.double(), y.reshape([]))
 
         total_loss += loss.item()
-        bench_total += bench_loss.item()
+        RNN_total += RNN_loss.item()
 
         opti.zero_grad()
-        bench_opti.zero_grad()
+        RNN_opti.zero_grad()
 
         loss.backward(retain_graph=True)
-        bench_loss.backward(retain_graph=True)
+        RNN_loss.backward(retain_graph=True)
 
         opti.step()
-        bench_opti.step()
+        RNN_opti.step()
 
         plotpred = pred.detach().numpy()
-        plotbench = bench_pred.detach().numpy()
+        plotRNN = RNN_pred.detach().numpy()
 
         axs.plot(int(step), plotpred[0], 'rx', label='Prediction')
-        axs.plot(int(step), plotbench, 'bx', label='RNN Benchmark')
+        axs.plot(int(step), plotRNN, 'bx', label='RNN Benchmark')
         axs.plot(int(step), y[0], 'gx', label='Actual')
 
         if len(roll) > 12:
             roll = roll[1:]
-            bench_roll = bench_roll[1:]
+            RNN_roll = RNN_roll[1:]
             actual_roll = actual_roll[1:]
 
         axs.plot(int(step), mean(roll), 'ro', label='Pred Rolling Avg')
-        axs.plot(int(step), mean(bench_roll), 'bo', label='RNN Rolling Avg')
+        axs.plot(int(step), mean(RNN_roll), 'bo', label='RNN Rolling Avg')
         axs.plot(int(step), mean(actual_roll), 'go', label='Actual Rolling Avg')
 
         axs.set_xlim(max(-1, int(step) - 100), int(step))
@@ -100,7 +100,7 @@ for repetition in range(1):
         
         if (int(step) - 1) % 100 == 0:
             print('Average error HNN:', total_loss/int(step))
-            print('Average error RNN:', bench_total/int(step))
+            print('Average error RNN:', RNN_total/int(step))
         
         plt.draw(); plt.pause(0.001)
 
