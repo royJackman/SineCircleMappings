@@ -33,8 +33,13 @@ class MultilayerHarmonicNN(nn.Module):
             for i, l in enumerate(layers[:-1]):
                 self.layers.append(HarmonicNN(l, layers[i+1]))
             self.layers.append(HarmonicNN(layers[-1], output_size))
+        
+        self.linear = None if output_size == 1 else nn.Parameter(torch.rand(output_size))
     
     def forward(self, x):
         for l in self.layers:
             x = l(x.clone())
-        return x
+        if self.linear is None:
+            return x
+        else:
+            return torch.mul(x, self.linear.clone())
