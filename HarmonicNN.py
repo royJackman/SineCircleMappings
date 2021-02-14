@@ -12,6 +12,7 @@ class HarmonicNN(nn.Module):
         self.kappas = nn.Parameter(torch.rand(input_size))
         self.gammas = nn.Parameter(torch.rand(input_size))
         self.deltas = nn.Parameter(torch.rand(input_size))
+        self.mask = torch.rand(input_size, output_size).double()
     
     def forward(self, x):
         forget = torch.mul(self.alphas.clone(), x.clone())
@@ -21,7 +22,8 @@ class HarmonicNN(nn.Module):
         updated = forget + linear + extsin
         if len(updated.shape) == 3:
             updated = updated[0]
-        return torch.mm(updated.double(), torch.ones(self.input_size, self.output_size).double())
+        # return torch.mm(updated.double(), torch.ones(self.input_size, self.output_size).double())
+        return torch.mm(updated.double(), self.mask)
 
 class MultilayerHarmonicNN(nn.Module):
     def __init__(self, input_size, output_size, layers=None):
