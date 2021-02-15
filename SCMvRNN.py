@@ -18,7 +18,7 @@ parser.add_argument('-i', '--input_spread', type=int, dest='ins', default=2, hel
 parser.add_argument('-l', '--layers', nargs='+', type=int, dest='layers', default=None, help='Reservoir layers')
 parser.add_argument('-n', '--nodes', type=int, dest='nodes', default=8, help='Number of hidden nodes in the RNN')
 parser.add_argument('-o', '--output_spread', type=int, dest='outs', default=4, help='Number of output channels')
-parser.add_argument('-p', '--parse_function', type=str, dest='func_string', default=None, help='Custom function to learn, will override built-in functions')
+parser.add_argument('-p', '--parse_function', type=str, dest='func_string', default='sin(x)', help='Custom function to learn, will override built-in functions')
 parser.add_argument('-r', '--range', nargs='+', type=int, dest='range', default=[0, 100], help='Range of data to generate')
 args = parser.parse_args()
 
@@ -81,7 +81,7 @@ SCM_axis = plt.subplot(232)
 RNN_axis = plt.subplot(233)
 
 actual_axis.set_title('Actual')
-SCM_axis.set_title('SCM')
+SCM_axis.set_title('HNN')
 RNN_axis.set_title('RNN')
 
 lindata = generate_data(args.range[0], args.range[1], args.epochs)
