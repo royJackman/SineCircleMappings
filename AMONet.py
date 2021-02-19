@@ -45,7 +45,7 @@ RNN_roll = []
 NN_roll = []
 actual_roll = []
 
-fig, axs = plt.subplots(1, 1)
+fig, axs = plt.subplots(2, 1)
 plt.ion()
 
 torch.autograd.set_detect_anomaly(True)
@@ -93,12 +93,15 @@ for repetition in range(1):
         plotRNN = RNN_pred.detach().numpy()
         plotNN = NN_pred.detach().numpy()
         
-        axs.set_title('Atlantic Multi-Decadal Oscillation')
+        axs[0].set_title('Atlantic Multi-Decadal Oscillation')
 
-        axs.plot(int(step), plotpred[0], 'rx', label='Prediction')
-        axs.plot(int(step), plotRNN, 'bx', label='RNN Benchmark')
-        axs.plot(int(step), plotNN, 'kx', label='NN Benchmark')
-        axs.plot(int(step), y[0], 'gx', label='Actual')
+        axs[0].plot(int(step), plotpred[0], 'rx', label='Prediction')
+        axs[0].plot(int(step), plotRNN, 'bx', label='RNN Benchmark')
+        axs[0].plot(int(step), plotNN, 'kx', label='NN Benchmark')
+        axs[0].plot(int(step), y[0], 'gx', label='Actual')
+
+        axs[0].set_xlim(max(-1, int(step) - 100), int(step))
+        axs[0].set_ylim(-0.5, 0.5)
 
         if len(roll) > 12:
             roll = roll[1:]
@@ -106,19 +109,20 @@ for repetition in range(1):
             NN_roll = NN_roll[1:]
             actual_roll = actual_roll[1:]
 
-        axs.plot(int(step), mean(roll), 'ro', label='Pred Rolling Avg')
-        axs.plot(int(step), mean(RNN_roll), 'bo', label='RNN Rolling Avg')
-        axs.plot(int(step), mean(NN_roll), 'ko', label='NN Rolling Avg')
-        axs.plot(int(step), mean(actual_roll), 'go', label='Actual Rolling Avg')
+        axs[1].plot(int(step), mean(roll), 'ro', label='Pred Rolling Avg')
+        axs[1].plot(int(step), mean(RNN_roll), 'bo', label='RNN Rolling Avg')
+        axs[1].plot(int(step), mean(NN_roll), 'ko', label='NN Rolling Avg')
+        axs[1].plot(int(step), mean(actual_roll), 'go', label='Actual Rolling Avg')
 
-        axs.set_xlim(max(-1, int(step) - 100), int(step))
-        axs.set_ylim(-0.5, 0.5)
+        axs[1].set_xlim(max(-1, int(step) - 100), int(step))
+        axs[1].set_ylim(-0.25, 0.25)
 
         x = y
         y = data[int(step) + 1].reshape(1,1)
 
         if int(step) == 0:
-            axs.legend(loc='lower left')
+            axs[0].legend(loc='lower left')
+            axs[1].legend(loc='lower left')
         
         if (int(step) - 1) % 100 == 0:
             print('Average error HNN:', total_loss/int(step))
