@@ -39,11 +39,13 @@ def generate_data(start, end, points):
 
 torch.manual_seed(0)
 # model = torch.jit.script(SCMNet(2, 2, args.nodes, args.ins, args.outs)).to(device)
-model = torch.jit.script(MultiSCMNet(2, 2, [6, 6, 6]))
+# model = torch.jit.script(MultiSCMNet(2, 2, [6, 6, 6]))
+from HarmonicNN import MultilayerHarmonicNN
+model = torch.jit.script(MultilayerHarmonicNN(1, 1, [2]))
 reservoir0 = torch.rand(2, 6).to(device)
 crit = nn.MSELoss()
-opti = torch.optim.SGD(model.parameters(), lr=0.03, momentum=0.9)
-# opti = torch.optim.Adam(model.parameters(), lr=0.1)
+# opti = torch.optim.SGD(model.parameters(), lr=0.03, momentum=0.9)
+opti = torch.optim.Adam(model.parameters(), lr=0.1)
 
 fig, axs = plt.subplots(1, 2)
 axs[0].set_xlim(-2, 2)
@@ -66,8 +68,8 @@ actual_past = []
 total_loss = 0.0
 for step in trange(args.epochs):
     # pred, reservoir0 = model(x.clone(), reservoir0.clone())
-    pred = model(x)
-    loss = crit(pred.double(), y.flatten())
+    pred = model(x[:, np.newaxis])
+    loss = crit(pred.double().flatten(), y.flatten())
     total_loss += loss.item()
     opti.zero_grad()
     loss.backward(retain_graph=True)
