@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from HarmonicNN import MultilayerHarmonicNN
+from MixedReservoirNet import MultiMix
 from tqdm import trange
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -25,7 +26,8 @@ models = {}
 crits = {}
 optis = {}
 for month in months:
-    models[month] = torch.jit.script(MultilayerHarmonicNN(1, 1, [6,6]))
+    # models[month] = torch.jit.script(MultilayerHarmonicNN(1, 1, [6, 6, 6, 6]))
+    models[month] = torch.jit.script(MultiMix(1, 1, [6, 6, 6, 6], [1, 2, 3, 4]).double())
     crits[month] = torch.nn.MSELoss()
     optis[month] = torch.optim.Adam(models[month].parameters(), lr=0.01)
 # model = torch.jit.script(MultilayerHarmonicNN(1, 12, [4, 4]))
@@ -35,11 +37,11 @@ for month in months:
 
 total_loss = 0.0
 
-plt.figure(1)
+# plt.figure(1)
+fig, axs = plt.subplots(3, 4) 
 plt.get_current_fig_manager().window.state('zoomed')
 plt.ion()
 
-fig, axs = plt.subplots(3, 4)
 
 for i in range(100):
     round_loss = 0.0
@@ -84,11 +86,15 @@ for i in range(100):
     for j in range(3):
         for k in range(4):
             axs[j][k].cla()
+            axs[j][k].set_title(f'{months[4*j + k]}')
             axs[j][k].plot(data[:, 4*j + k])
             axs[j][k].plot(predictions[:, 4*j + k])
-
+    fig.suptitle(f'Round {i}')
     plt.gcf().canvas.draw()
     plt.gcf().canvas.flush_events()
     # plt.draw(); plt.pause(0.02)
+
+plt.ioff()
+plt.show()
 
 print(f'{models["Jan"](torch.tensor(150).reshape((1,1)))}\n{data[150,0]}')
