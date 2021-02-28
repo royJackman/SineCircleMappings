@@ -27,7 +27,7 @@ crits = {}
 optis = {}
 for month in months:
     # models[month] = torch.jit.script(MultilayerHarmonicNN(1, 1, [6, 6, 6, 6]))
-    models[month] = torch.jit.script(MultiMix(1, 1, [6, 6, 6], [2, 3, 4]).double())
+    models[month] = torch.jit.script(MultiMix(1, 1, [6, 6], [3, 4]).double())
     crits[month] = torch.nn.MSELoss()
     optis[month] = torch.optim.Adam(models[month].parameters(), lr=0.01)
 # model = torch.jit.script(MultilayerHarmonicNN(1, 12, [4, 4]))
