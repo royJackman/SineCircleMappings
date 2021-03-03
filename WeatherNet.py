@@ -14,7 +14,11 @@ months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 
 data = pd.read_csv('Data/amo_monthly.csv')
 data = torch.tensor(data[months].values)
 
-train_count = 139
+# plt.plot(data[:, 0])
+# plt.show()
+# sys.exit()
+
+train_count = 120
 
 torch.manual_seed(0)
 torch.autograd.set_detect_anomaly(True)
@@ -22,7 +26,8 @@ models = {}
 crits = {}
 optis = {}
 for month in months:
-    models[month] = torch.jit.script(MultiMix(1, 1, [10, 10], [6, 6]).double())
+    # models[month] = torch.jit.script(MultilayerHarmonicNN(1, 1, [6, 6, 6, 6]))
+    models[month] = torch.jit.script(MultiMix(1, 1, [100], [20]).double())
     crits[month] = torch.nn.MSELoss()
     optis[month] = torch.optim.Adam(models[month].parameters(), lr=0.01)
 
@@ -65,8 +70,9 @@ for i in range(100):
             axs[j][k].cla()
             axs[j][k].set_title(f'{months[4*j + k]}')
             axs[j][k].plot(data[:, 4*j + k])
-            axs[j][k].plot(predictions[:, 4*j + k])
-    fig.suptitle(f'Round {i}')
+            axs[j][k].plot(predictions[:train_count, 4*j + k])
+            axs[j][k].plot(list(range(train_count, data.shape[0])), predictions[train_count:, 4*j + k])
+    fig.suptitle(f'Layers: {models["Dec"].reservoir_sizes}, Linears: {models["Dec"].linear_nodes},  Round {i+1}')
     plt.gcf().canvas.draw()
     plt.gcf().canvas.flush_events()
 
