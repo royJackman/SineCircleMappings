@@ -38,7 +38,7 @@ plt.get_current_fig_manager().window.state('zoomed')
 plt.ion()
 
 
-for i in range(100):
+for i in range(250):
     round_loss = 0.0
     predictions = np.zeros(data.shape)
     for step in range(train_count):
