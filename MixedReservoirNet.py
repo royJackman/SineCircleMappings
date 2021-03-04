@@ -22,10 +22,16 @@ class MixedLayer(torch.nn.Module):
     def forward(self, x):
         driven_state = torch.matmul(x.double(), self.transition.double())
         driven_state = torch.matmul(driven_state, self.reservoir)
+        # driven_state = torch.add(torch.mul(self.gammas, driven_state), self.deltas)
+
         if len(driven_state.shape) == 1:
             driven_state = driven_state[np.newaxis, :]
-        driven_state = torch.cat((torch.sin(driven_state[0, :-1 * self.linear_nodes]), torch.tanh(driven_state[0, -1 * self.linear_nodes:])), 0)
-        # driven_state = torch.mul(self.kappas, driven_state)
+
+        if self.linear_nodes <= 0:
+            driven_state = torch.sin(driven_state)
+        else:
+            driven_state = torch.cat((torch.sin(driven_state[0, :-1 * self.linear_nodes]), torch.tanh(driven_state[0, -1 * self.linear_nodes:])), 0)
+
         return torch.mul(self.kappas, driven_state)
         
 class MultiMix(torch.nn.Module):
