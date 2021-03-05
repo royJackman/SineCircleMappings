@@ -27,7 +27,7 @@ crits = {}
 optis = {}
 for month in months:
     # models[month] = torch.jit.script(MultilayerHarmonicNN(1, 1, [6, 6, 6, 6]))
-    models[month] = torch.jit.script(MultiMix(1, 1, [100], [20]).double())
+    models[month] = torch.jit.script(MultiMix(1, 1, [7], [3]).double())
     crits[month] = torch.nn.MSELoss()
     optis[month] = torch.optim.Adam(models[month].parameters(), lr=0.01)
 
@@ -38,7 +38,7 @@ plt.get_current_fig_manager().window.state('zoomed')
 plt.ion()
 
 
-for i in range(100):
+for i in range(1000):
     round_loss = 0.0
     predictions = np.zeros(data.shape)
     for step in range(train_count):
