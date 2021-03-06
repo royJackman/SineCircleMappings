@@ -18,10 +18,14 @@ class MixedLayer(torch.nn.Module):
         self.gammas = torch.nn.Parameter(torch.rand(reservoir_size))
         self.deltas = torch.nn.Parameter(torch.rand(reservoir_size))
         self.reservoir = torch.from_numpy(nx.to_numpy_array(nx.generators.random_graphs.watts_strogatz_graph(reservoir_size, 3, 0.5))).double()
-    
+        self.conversion = torch.matmul(self.transition.double(), self.reservoir.double())
+
     def forward(self, x):
-        driven_state = torch.matmul(x.double(), self.transition.double())
-        driven_state = torch.matmul(driven_state, self.reservoir)
+        # driven_state = torch.matmul(x.double(), self.transition.double())
+        # driven_state = torch.matmul(driven_state, self.reservoir)
+
+        driven_state = torch.matmul(x.double(), self.conversion.double())
+
         # driven_state = torch.add(torch.mul(self.gammas, driven_state), self.deltas)
 
         if len(driven_state.shape) == 1:
