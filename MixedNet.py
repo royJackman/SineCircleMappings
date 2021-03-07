@@ -41,23 +41,27 @@ class MixedNet(torch.nn.Module):
         self.transitions.append(torch.rand((last, self.output_size)))
     
     def forward(self, x):
-        for i, a in enumerate(self.alphas):
-            x = torch.matmul(x.double(), self.transitions[int(i)].double())
-            d = self.distributions[i]
-            retval = []
-            for i, s in enumerate(torch.split(x, d, dim=1)):
-                if self.dist_order[i] == 'sin':
-                    retval.append(torch.sin(s))
-                elif self.dist_order[i] == 'tanh':
-                    retval.append(torch.tanh(s))
-                elif self.dist_order[i] == 'log':
-                    retval.append(torch.log(torch.pow(s, 2)))
-                else:
-                    retval.append(s)
+        retval = torch.zeros(x.shape[0], self.output_size)
+        for e, example in enumerate(x):
+            temp_x = example.clone()
+            for i, a in enumerate(self.alphas):
+                temp_x = torch.matmul(temp_x.double(), self.transitions[i].double())
+                d = self.distributions[i]
+                updates = []
+                for i, s in enumerate(torch.split(temp_x, d, dim=0)):
+                    if self.dist_order[i] == 'sin':
+                        updates.append(torch.sin(s))
+                    elif self.dist_order[i] == 'tanh':
+                        updates.append(torch.tanh(s))
+                    elif self.dist_order[i] == 'log':
+                        updates.append(torch.log(torch.pow(s, 2)))
+                    else:
+                        updates.append(s)
 
-            x = torch.cat(retval, 0)
-            x = a(x)
-        return torch.matmul(x.double(), self.transitions[-1].double())
+                temp_x = torch.cat(updates, 0)
+                temp_x = a(temp_x.double())
+            retval[e, :] = torch.matmul(temp_x.double(), self.transitions[-1].double())
+        return retval.double()
 
 class MixedReservoir(torch.nn.Module):
     def __init__(self, input_size, output_size, reservoir_sizes, distributions=None, dist_order=['sin', 'tanh', 'log']):
@@ -97,7 +101,7 @@ class MixedReservoir(torch.nn.Module):
         for t in range(x.shape[1]):
             for example in range(x.shape[0]):
                 for i, a in enumerate(self.alphas):
-                    temp_x = torch.matmul(x[example, t, :].double(), self.transitions[i].double())
+                    temp_x = torch.matmul(x[example, t, :].clone().double(), self.transitions[i].double())
                     temp_x = torch.add(temp_x.double(), batch_states[example][i].double())
                     temp_x = torch.matmul(temp_x.double(), self.reservoirs[i].double())
 
