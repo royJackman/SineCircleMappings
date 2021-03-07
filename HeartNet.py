@@ -1,3 +1,4 @@
+import json
 import torch
 
 import matplotlib.pyplot as plt
@@ -14,7 +15,6 @@ data = pd.read_csv('Data/heart.csv')
 data = torch.tensor(data[cols].values).double()
 
 target = data[:, -1:]
-print(target.shape)
 data = data[:, :-1]
 
 examples = data.shape[0]
@@ -22,17 +22,13 @@ epochs = 300
 eighty = int(0.8 * examples)
 twenty = examples - eighty
 
-architectures = [
-    [[15, 15, 0], [15, 15, 0], [30, 30]],
-    [[25, 5, 0], [25, 5, 0], [30, 30]],
-    [[0, 15, 15], [0, 15, 15], [30, 30]],
-    [[0, 25, 5], [0, 25, 5], [30, 30]],
-    [[15, 0, 15], [15, 0, 15], [30, 30]],
-    [[25, 0, 5], [25, 0, 5], [30, 30]],
-    [[15, 15, 0], [15, 15, 0], [30, 30]],
-    [[25, 5, 0], [25, 5, 0], [30, 30]],
-    [[10, 10, 10], [10, 10, 10], [30, 30]]
-]
+performance_statistics = {}
+architectures = []
+for i in range(0, 30):
+    rem = 30 - i
+    for j in range(0, rem):
+        mod = rem - j
+        architectures.append([[i, j, 30 - (i+j)], [i, j, 30 - (i+j)], [30, 30]])
 
 for i, a in enumerate(architectures):
     res = a.pop()
@@ -68,4 +64,8 @@ for i, a in enumerate(architectures):
         if loss.item() < min_arch:
             min_arch = loss.item()
         arch_test += loss.item()/float(epochs)
+    performance_statistics[f'Layer {a[0]} sin, {a[1]} tanh, {a[2]} log'] = min_arch
     print(f'Avg train MSE: {arch_loss}, Avg test MSE: {arch_test}, Best test MSE: {min_arch}\n----------------------')
+
+with open('heartnet.json', 'w') as f:
+    json.dump(performance_statistics, f)
