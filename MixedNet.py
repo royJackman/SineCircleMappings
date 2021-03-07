@@ -10,7 +10,7 @@ class NodesLayer(torch.nn.Module):
         self.alphas = alphas
     
     def forward(self, x):
-        return torch.mul(self.alphas, x)
+        return torch.mul(self.alphas.clone(), x.clone())
 
 class MixedNet(torch.nn.Module):
     def __init__(self, input_size, output_size, layers, distributions=None, dist_order=['sin', 'tanh', 'log']):
@@ -115,9 +115,10 @@ class MixedReservoir(torch.nn.Module):
                             updates.append(torch.log(torch.pow(s, 2)))
                         else:
                             updates.append(s)
+
                     temp_x = torch.cat(updates)
-                    temp_x = a(temp_x)
-                    batch_states[example][i] = temp_x
+                    temp_x = a(temp_x.clone())
+                    batch_states[example][i] = temp_x.clone()
                 retval[example, t, :] = self.linear(temp_x)
         
         return retval

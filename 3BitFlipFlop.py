@@ -19,7 +19,6 @@ dataloader = torch.utils.data.DataLoader(inputs, batch_size=64, shuffle=True)
 for i, d in enumerate(dataloader):
     opti.zero_grad()
     pred = model(d.double())
-    print(pred.shape)
     loss = crit(pred, outputs[i * 64: (i+1) * 64])
     print(f'Batch {i+1} loss: {loss.item()}')
     total_loss += loss.item()
