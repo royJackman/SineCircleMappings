@@ -9,17 +9,20 @@ inputs, outputs = data
 torch.manual_seed(0)
 torch.autograd.set_detect_anomaly(True)
 
-model = MixedReservoir(3, 3, [64], [[48, 16]]).double()
+model = MixedReservoir(3, 3, [30, 30], [[30], [30]]).double()
 crit = torch.nn.MSELoss()
 opti = torch.optim.Adam(model.parameters(), lr=0.01)
+# opti = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
 total_loss = 0.0
+batch_size = 64
 
-dataloader = torch.utils.data.DataLoader(inputs, batch_size=64, shuffle=True)
-for i, d in enumerate(dataloader):
+dataloader = torch.utils.data.DataLoader(inputs, batch_size=batch_size, shuffle=True)
+for i in range(int(len(inputs/batch_size))):
     opti.zero_grad()
-    pred = model(d.double())
-    loss = crit(pred, outputs[i * 64: (i+1) * 64])
+    pred = model(inputs[i * batch_size: (i+1) * batch_size])
+    # print(inputs[0], pred[0], outputs[i * 64])
+    loss = crit(pred, outputs[i * batch_size: (i+1) * batch_size])
     print(f'Batch {i+1} loss: {loss.item()}')
     total_loss += loss.item()
     print(total_loss)
