@@ -64,7 +64,7 @@ for i, a in enumerate(architectures):
         if loss.item() < min_arch:
             min_arch = loss.item()
         arch_test += loss.item()/float(epochs)
-    performance_statistics[f'Layer {a[0]} sin, {a[1]} tanh, {a[2]} log'] = min_arch
+    performance_statistics[f'Layer {a[0][0]} sin, {a[0][1]} tanh, {a[0][2]} log'] = min_arch
     print(f'Avg train MSE: {arch_loss}, Avg test MSE: {arch_test}, Best test MSE: {min_arch}\n----------------------')
 
 with open('heartnet.json', 'w') as f:
