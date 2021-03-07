@@ -38,43 +38,42 @@ class MixedNet(torch.nn.Module):
             self.transitions.append(torch.rand((last, l)))
             last = l
             
-        self.transitions.append(torch.rand((last, self.output_size)))
+        self.linear = torch.nn.Linear(last, self.output_size)
     
     def forward(self, x):
-        retval = torch.zeros(x.shape[0], self.output_size)
-        for e, example in enumerate(x):
-            temp_x = example.clone()
-            for i, a in enumerate(self.alphas):
-                temp_x = torch.matmul(temp_x.double(), self.transitions[i].double())
-                d = self.distributions[i]
-                updates = []
-                for i, s in enumerate(torch.split(temp_x, d, dim=0)):
-                    if self.dist_order[i] == 'sin':
-                        updates.append(torch.sin(s))
-                    elif self.dist_order[i] == 'tanh':
-                        updates.append(torch.tanh(s))
-                    elif self.dist_order[i] == 'log':
-                        updates.append(torch.log(torch.pow(s, 2)))
-                    else:
-                        updates.append(s)
+        # Loop through layers of network
+        for i, a in enumerate(self.alphas):
+            x = torch.matmul(x.double(), self.transitions[i].double())
 
-                temp_x = torch.cat(updates, 0)
-                temp_x = a(temp_x.double())
-            retval[e, :] = torch.matmul(temp_x.double(), self.transitions[-1].double())
-        return retval.double()
+            # Perform mixed update
+            updates = []
+            for i, s in enumerate(torch.split(x, self.distributions[i], dim=1)):
+                if self.dist_order[i] == 'sin':
+                    updates.append(torch.sin(s))
+                elif self.dist_order[i] == 'tanh':
+                    updates.append(torch.tanh(s))
+                elif self.dist_order[i] == 'log':
+                    updates.append(torch.log(torch.pow(s, 2)))
+                else:
+                    updates.append(s)
+
+            x = torch.cat(updates, dim=1)
+            x = a(x.double())
+        return self.linear(x)
 
 class MixedReservoir(torch.nn.Module):
-    def __init__(self, input_size, output_size, reservoir_sizes, distributions=None, dist_order=['sin', 'tanh', 'log']):
+    def __init__(self, input_size, output_size, reservoir_sizes, distributions=None, dist_order=['sin', 'tanh', 'relu']):
         super(MixedReservoir, self).__init__()
         self.input_size = input_size
         self.output_size = output_size
         self.reservoir_sizes = reservoir_sizes
-        self.reservoirs = []
-        self.states = []
-        self.transitions = []
         self.distributions = [] if distributions is None else distributions
         self.dist_order = dist_order
 
+        self.reservoirs = []
+        self.states = []
+        self.transitions = []
+        
         self.alphas = torch.nn.ModuleList([])
 
         last = input_size
@@ -86,41 +85,46 @@ class MixedReservoir(torch.nn.Module):
             if distributions is None:
                 self.distributions.append([l])
             elif sum(self.distributions[i]) != l:
-                sys.exit(f'Distribution at layer {i + 1} does not match layer size')
+                raise ValueError(f'Distribution at layer {i + 1} does not match layer size')
             elif len(self.distributions[i]) > len(dist_order):
-                sys.exit(f'Distributing over more functions than available on layer {i+1}')
+                raise ValueError(f'Distributing over more functions than available on layer {i+1}')
             
             self.transitions.append(torch.rand((last, l)))
             last = l
-            
+
         self.linear = torch.nn.Linear(last, output_size)
 
     def forward(self, x):
+        # Initialize return value and empty batch internal states
         retval = torch.zeros((x.shape[0], x.shape[1], self.output_size))
-        batch_states = x.shape[0] * [self.states]
+        batch_states = [torch.zeros((x.shape[0], r)) for r in self.reservoir_sizes]
+
+        # Loop through timesteps 
         for t in range(x.shape[1]):
-            for example in range(x.shape[0]):
-                for i, a in enumerate(self.alphas):
-                    temp_x = torch.matmul(x[example, t, :].clone().double(), self.transitions[i].double())
-                    temp_x = torch.add(temp_x.double(), batch_states[example][i].double())
-                    temp_x = torch.matmul(temp_x.double(), self.reservoirs[i].double())
+            temp_x = x[:, t, :].clone().double()
 
-                    updates = []
-                    for j, s in enumerate(torch.split(temp_x.double(), self.distributions[i], dim=0)):
-                        if self.dist_order[j] == 'sin':
-                            updates.append(torch.sin(s))
-                        elif self.dist_order[j] == 'tanh':
-                            updates.append(torch.tanh(s))
-                        elif self.dist_order[j] == 'log':
-                            updates.append(torch.log(torch.pow(s, 2)))
-                        else:
-                            updates.append(s)
+            # Loop through layers of network
+            for i, a in enumerate(self.alphas):
+                temp_x = torch.matmul(temp_x.double(), self.transitions[i].double())
+                temp_x = torch.add(temp_x.double(), batch_states[i].double())
+                temp_x = torch.matmul(temp_x.double(), self.reservoirs[i].double())
 
-                    temp_x = torch.cat(updates)
-                    temp_x = a(temp_x.clone())
-                    batch_states[example][i] = temp_x.clone()
-                retval[example, t, :] = self.linear(temp_x)
-        
+                # Perform mixed update
+                updates = []
+                for j, s in enumerate(torch.split(temp_x.double(), self.distributions[i], dim=1)):
+                    if self.dist_order[j] == 'sin':
+                        updates.append(torch.sin(s))
+                    elif self.dist_order[j] == 'tanh':
+                        updates.append(torch.tanh(s))
+                    elif self.dist_order[j] == 'relu':
+                        updates.append(torch.relu(s))
+                    else:
+                        updates.append(s)
+
+                temp_x = torch.cat(updates, dim=1)
+                temp_x = a(temp_x.clone())
+                batch_states[i] = temp_x.clone()
+            retval[:, t, :] = self.linear(temp_x)
         return retval
     
     def reset_states(self):
