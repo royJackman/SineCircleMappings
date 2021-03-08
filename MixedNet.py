@@ -13,7 +13,7 @@ class NodesLayer(torch.nn.Module):
         return torch.mul(self.alphas.clone(), x.clone())
 
 class MixedNet(torch.nn.Module):
-    def __init__(self, input_size, output_size, layers, distributions=None, dist_order=['sin', 'tanh', 'log']):
+    def __init__(self, input_size, output_size, layers, distributions=None, dist_order=['sin', 'tanh', 'log', 'relu', 'sigmoid']):
         super(MixedNet, self).__init__()
         self.input_size = input_size
         self.output_size = output_size
@@ -47,13 +47,17 @@ class MixedNet(torch.nn.Module):
 
             # Perform mixed update
             updates = []
-            for i, s in enumerate(torch.split(x, self.distributions[i], dim=1)):
-                if self.dist_order[i] == 'sin':
+            for j, s in enumerate(torch.split(x, self.distributions[i], dim=1)):
+                if self.dist_order[j] == 'sin':
                     updates.append(torch.sin(s))
-                elif self.dist_order[i] == 'tanh':
+                elif self.dist_order[j] == 'tanh':
                     updates.append(torch.tanh(s))
-                elif self.dist_order[i] == 'log':
+                elif self.dist_order[j] == 'log':
                     updates.append(torch.log(torch.pow(s, 2)))
+                elif self.dist_order[j] == 'relu':
+                    updates.append(torch.relu(s))
+                elif self.dist_order[j] == 'sigmoid':
+                    updates.append(torch.sigmoid(s))
                 else:
                     updates.append(s)
 
@@ -62,7 +66,7 @@ class MixedNet(torch.nn.Module):
         return self.linear(x)
 
 class MixedReservoir(torch.nn.Module):
-    def __init__(self, input_size, output_size, reservoir_sizes, distributions=None, dist_order=['sin', 'tanh', 'relu']):
+    def __init__(self, input_size, output_size, reservoir_sizes, distributions=None, dist_order=['sin', 'tanh', 'log', 'relu', 'sigmoid']):
         super(MixedReservoir, self).__init__()
         self.input_size = input_size
         self.output_size = output_size
@@ -116,8 +120,12 @@ class MixedReservoir(torch.nn.Module):
                         updates.append(torch.sin(s))
                     elif self.dist_order[j] == 'tanh':
                         updates.append(torch.tanh(s))
+                    elif self.dist_order[j] == 'log':
+                        updates.append(torch.log(torch.pow(s, 2)))
                     elif self.dist_order[j] == 'relu':
                         updates.append(torch.relu(s))
+                    elif self.dist_order[j] == 'sigmoid':
+                        updates.append(torch.sigmoid(s))
                     else:
                         updates.append(s)
 
