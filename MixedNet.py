@@ -4,13 +4,15 @@ import torch
 
 import numpy as np
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 class NodesLayer(torch.nn.Module):
     def __init__(self, alphas):
         super(NodesLayer, self).__init__()
-        self.alphas = alphas
+        self.alphas = alphas.to(device)
     
     def forward(self, x):
-        return torch.mul(self.alphas.clone(), x.clone())
+        return torch.mul(self.alphas.clone(), x.clone().to(device))
 
 class MixedNet(torch.nn.Module):
     def __init__(self, input_size, output_size, layers, distributions=None, dist_order=['sin', 'tanh', 'log', 'relu', 'sigmoid']):
@@ -22,11 +24,11 @@ class MixedNet(torch.nn.Module):
         self.distributions = [] if distributions is None else distributions
         self.dist_order = dist_order
 
-        self.alphas = torch.nn.ModuleList([])
+        self.alphas = torch.nn.ModuleList([]).to(device)
 
         last = input_size
         for i, l in enumerate(self.layers):
-            self.alphas.append(NodesLayer(torch.nn.Parameter(torch.rand(l))))
+            self.alphas.append(NodesLayer(torch.nn.Parameter(torch.rand(l))).to(device))
 
             if distributions is None:
                 self.distributions.append([l])
@@ -35,10 +37,10 @@ class MixedNet(torch.nn.Module):
             elif len(self.distributions[i]) > len(dist_order):
                 sys.exit(f'Distributing over more functions than available on layer {i+1}')
             
-            self.transitions.append(torch.rand((last, l)))
+            self.transitions.append(torch.rand((last, l)).to(device))
             last = l
             
-        self.linear = torch.nn.Linear(last, self.output_size)
+        self.linear = torch.nn.Linear(last, self.output_size).to(device)
     
     def forward(self, x):
         # Loop through layers of network
@@ -47,7 +49,7 @@ class MixedNet(torch.nn.Module):
 
             # Perform mixed update
             updates = []
-            for j, s in enumerate(torch.split(x, self.distributions[i], dim=1)):
+            for j, s in enumerate(torch.split(x, self.distributions[i], dim=2)):
                 if self.dist_order[j] == 'sin':
                     updates.append(torch.sin(s))
                 elif self.dist_order[j] == 'tanh':
@@ -61,7 +63,7 @@ class MixedNet(torch.nn.Module):
                 else:
                     updates.append(s)
 
-            x = torch.cat(updates, dim=1)
+            x = torch.cat(updates, dim=2)
             x = a(x.double())
         return self.linear(x)
 
