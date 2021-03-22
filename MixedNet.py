@@ -12,7 +12,7 @@ class NodesLayer(torch.nn.Module):
         self.alphas = alphas.to(device)
     
     def forward(self, x):
-        return torch.mul(self.alphas.clone(), x.clone().to(device))
+        return torch.mul(self.alphas, x.to(device))
 
 class MixedNet(torch.nn.Module):
     def __init__(self, input_size, output_size, layers, distributions=None, dist_order=['sin', 'tanh', 'log', 'relu', 'sigmoid']):
@@ -49,7 +49,7 @@ class MixedNet(torch.nn.Module):
 
             # Perform mixed update
             updates = []
-            for j, s in enumerate(torch.split(x, self.distributions[i], dim=2)):
+            for j, s in enumerate(torch.split(x, self.distributions[i], dim=-1)):
                 if self.dist_order[j] == 'sin':
                     updates.append(torch.sin(s))
                 elif self.dist_order[j] == 'tanh':
