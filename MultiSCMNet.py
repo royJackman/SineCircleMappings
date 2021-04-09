@@ -89,6 +89,6 @@ class MultiSCMNet(nn.Module):
     def forward(self, x):
         for i, l in enumerate(self.layers):
             x = l(x, self.states[i])
-            self.states[i] = x.clone()
+            # self.states[i] = l(x, self.states[i])
         # return torch.matmul(x, self.mask)
         return self.linear(x.float())

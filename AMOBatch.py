@@ -23,7 +23,7 @@ parser.add_argument('-n', '--nodes', type=int, dest='nodes', default=3, help='Nu
 args = parser.parse_args()
 
 torch.manual_seed(2)
-model = hnn.MultilayerHarmonicNN(1,1,[32, 32, 32, 32])
+model = hnn.MultilayerHarmonicNN(1,1,[32, 24, 16, 8])
 print(f'HNN Params: {sum([len(p.flatten()) for p in model.parameters()])}')
 crit = torch.nn.MSELoss()
 opti = torch.optim.Adam(model.parameters(), lr=0.01)
