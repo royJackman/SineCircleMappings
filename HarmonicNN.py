@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 torch.pi = torch.acos(torch.zeros(1)).item() * 2
 
 class HarmonicNN(nn.Module):
@@ -12,7 +14,7 @@ class HarmonicNN(nn.Module):
         self.kappas = nn.Parameter(torch.rand(input_size))
         self.gammas = nn.Parameter(torch.rand(input_size))
         self.deltas = nn.Parameter(torch.rand(input_size))
-        self.mask = torch.rand(input_size, output_size).double()
+        self.mask = torch.rand(input_size, output_size).double().to(device)
     
     def forward(self, x):
         forget = torch.mul(self.alphas.clone(), x.clone())
