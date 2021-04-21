@@ -18,7 +18,7 @@ data = torch.tensor(data[['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'
 data = data[:, np.newaxis]
 
 parser = argparse.ArgumentParser('Learn AMO data with with HNN')
-parser.add_argument('-e', '--epochs', type=int, dest='epochs', default=100, help='Number of epochs')
+parser.add_argument('-e', '--epochs', type=int, dest='epochs', default=2000, help='Number of epochs')
 parser.add_argument('-n', '--nodes', type=int, dest='nodes', default=3, help='Number of internal nodes')
 args = parser.parse_args()
 
