@@ -11,7 +11,8 @@ from tqdm import trange
 from statistics import mean
 from TestRNN import testRNN
 
-nodes = [64, 32, 16]
+nodes = [32]
+linear_nodes = [16, 8]
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 data = pd.read_csv('Data/amo_monthly.csv', delim_whitespace=True)
 data = torch.tensor(data[['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']].values).flatten()
@@ -22,7 +23,7 @@ freq = np.fft.fftfreq(t.shape[-1])
 
 middle = len(sp) // 2
 empty = np.zeros(sp.shape)
-node_half = sum(nodes) // 2
+node_half = (sum(nodes) + sum(linear_nodes)) // 2
 empty[:node_half] = sp[:node_half]
 empty[-node_half:] = sp[-node_half:]
 ifft = np.fft.ifft(empty)
@@ -35,11 +36,11 @@ parser.add_argument('-n', '--nodes', type=int, dest='nodes', default=3, help='Nu
 args = parser.parse_args()
 
 torch.manual_seed(2)
-model = hnn.MultilayerHarmonicNN(1,1,nodes).to(device)
+model = hnn.MultilayerHarmonicNN(1,1,nodes, linear_nodes).to(device).double()
 # model = msn.MultiSCMNet(1, 1, nodes).to(device).double()
 print(f'HNN Params: {sum([len(p.flatten()) for p in model.parameters()])}')
 crit = torch.nn.MSELoss()
-opti = torch.optim.Adam(model.parameters(), lr=1e-4)
+opti = torch.optim.Adam(model.parameters(), lr=1e-2)
 
 torch.autograd.set_detect_anomaly(True)
 losses = []
@@ -57,6 +58,10 @@ for r in trange(args.epochs):
     if not broken and loss.item() < fft_score:
         print(f'FFT score broken on epoch {int(r) + 1} with loss {loss.item()}')
         broken = True
+
+    if not (int(r) + 1) % 100:
+        print(f'Epoch {int(r)+1} MSE: {loss.item()}')
+    
     loss.backward(retain_graph=True)
     opti.step()
 
@@ -70,4 +75,5 @@ vals = [i for i in model(inp.double())]
 plt.plot(data.detach().cpu().numpy())
 plt.plot(vals)
 plt.plot(guess.detach().cpu().numpy())
+plt.plot(ifft)
 plt.show()
