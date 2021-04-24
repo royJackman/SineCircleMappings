@@ -59,7 +59,7 @@ for r in trange(args.epochs):
         print(f'FFT score broken on epoch {int(r) + 1} with loss {loss.item()}')
         broken = True
 
-    if not (int(r) + 1) % 100:
+    if not (int(r) + 1) % 200:
         print(f'Epoch {int(r)+1} MSE: {loss.item()}')
     
     loss.backward(retain_graph=True)
