@@ -28,7 +28,7 @@ empty[:node_half] = sp[:node_half]
 empty[-node_half:] = sp[-node_half:]
 ifft = np.fft.ifft(empty)
 fft_score = sum((data.detach().cpu().numpy().flatten() - ifft.real) ** 2)
-print('FFT:', fft_score)
+print('FFT score:', fft_score)
 
 parser = argparse.ArgumentParser('Learn AMO data with with HNN')
 parser.add_argument('-e', '--epochs', type=int, dest='epochs', default=2000, help='Number of epochs')
@@ -38,7 +38,7 @@ args = parser.parse_args()
 torch.manual_seed(2)
 model = hnn.MultilayerHarmonicNN(1,1,nodes, linear_nodes).to(device).double()
 # model = msn.MultiSCMNet(1, 1, nodes).to(device).double()
-print(f'HNN Params: {sum([len(p.flatten()) for p in model.parameters()])}')
+print(f'Model Params: {sum([len(p.flatten()) for p in model.parameters()])}')
 crit = torch.nn.MSELoss()
 opti = torch.optim.Adam(model.parameters(), lr=1e-2)
 
@@ -47,7 +47,7 @@ losses = []
 inp = torch.arange(1, 1981)[:, np.newaxis].to(device)
 guess = torch.mul(torch.mean(data), torch.ones((1980, 1)).to(device))
 hiscore = crit(data, guess).item()
-print(f'Guess to beat: {hiscore}')
+print(f'Hi score to beat: {hiscore}')
 broken = False
 
 for r in trange(args.epochs):
