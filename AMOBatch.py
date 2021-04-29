@@ -12,7 +12,7 @@ from statistics import mean
 from TestRNN import testRNN
 
 nodes = [64]
-linear_nodes = [16, 16]
+linear_nodes = [32, 16]
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 data = pd.read_csv('Data/amo_monthly.csv', delim_whitespace=True)
 data = torch.tensor(data[['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']].values).flatten()
