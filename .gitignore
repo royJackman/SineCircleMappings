@@ -147,3 +147,4 @@ checkpoint
 *.wav
 .vs
 SCMenv
+.idea
